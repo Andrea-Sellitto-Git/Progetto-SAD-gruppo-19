@@ -34,3 +34,7 @@ https://docs.google.com/presentation/d/1Fo8CridRR4CJrb7PYKAl9ak8KszQ70fZmpO1VU8D
 ### 2nd Sprint
 
 https://docs.google.com/presentation/d/1pINktPDKNjaePRPpMLAq91d3ny-85TkWHD8yZ9ZhMZg/edit?usp=sharing
+
+### Final Presentation
+
+https://docs.google.com/presentation/d/1eD1v08JBBMx1sB7oN6CZ-dwtqp8eOVQMXCCv4DXOt-c/edit?usp=sharing
