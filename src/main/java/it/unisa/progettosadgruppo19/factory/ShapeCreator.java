@@ -17,4 +17,8 @@ public abstract class ShapeCreator {
      * @return nuova istanza di Shape
      */
     public abstract Shape createShape(double startX, double startY, Color stroke);
+    
+    public Shape createShape(String text, double x, double y, Color stroke) {
+        throw new UnsupportedOperationException("Questa figura non supporta il testo.");
+    }
 }

@@ -1,6 +1,7 @@
 package it.unisa.progettosadgruppo19.command.receiver;
 
 import it.unisa.progettosadgruppo19.model.shapes.Shape;
+import javafx.scene.Node;
 
 /**
  * Interfaccia che definisce le operazioni di gestione delle {@link Shape}
@@ -22,18 +23,19 @@ public interface ShapeManagerReceiver {
      */
     void removeShape(Shape shape);
 
-     /**
-     * Restituisce l'indice (zero-based) della {@link Shape} all’interno
-     * della collezione di disegno.
+    /**
+     * Restituisce l'indice (zero-based) della {@link Shape} all’interno della
+     * collezione di disegno.
      *
-     * @param shape la shape di cui cercare l’indice; non può essere {@code null}
+     * @param shape la shape di cui cercare l’indice; non può essere
+     * {@code null}
      * @return l’indice della shape, oppure -1 se non presente
      */
     int getShapeIndex(Shape shape);
 
-     /**
-     * Inserisce la {@link Shape} specificata nella collezione di disegno
-     * alla posizione indicata.
+    /**
+     * Inserisce la {@link Shape} specificata nella collezione di disegno alla
+     * posizione indicata.
      *
      * @param shape la shape da inserire; non può essere {@code null}
      * @param index la posizione (zero-based) in cui inserirla
@@ -41,4 +43,8 @@ public interface ShapeManagerReceiver {
     void insertShapeAt(Shape shape, int index);
         
     void rotateShape(Shape shape,double degrees);
+
+    boolean containsNode(Node node);
+
+    void registerOnly(Shape shape);
 }

@@ -6,7 +6,9 @@ import it.unisa.progettosadgruppo19.factory.ConcreteShapeCreator;
 import it.unisa.progettosadgruppo19.factory.ShapeCreator;
 import it.unisa.progettosadgruppo19.model.shapes.AbstractShape;
 import it.unisa.progettosadgruppo19.model.shapes.Shape;
+import it.unisa.progettosadgruppo19.command.*;
 import it.unisa.progettosadgruppo19.command.receiver.ClipboardReceiver;
+import it.unisa.progettosadgruppo19.strategy.*;
 
 import javafx.scene.Node;
 import javafx.scene.effect.DropShadow;
@@ -20,15 +22,18 @@ import javafx.scene.shape.Rectangle;
 import java.util.List;
 
 /**
- * Gestisce gli eventi mouse sul canvas per creare, selezionare,
- * spostare, ridimensionare, decorare e incollare le Shape.
- * Implementa ClipboardReceiver per supportare copy/paste.
+ * Gestisce gli eventi mouse sul canvas per creare, selezionare, spostare,
+ * ridimensionare, decorare e incollare le Shape. Implementa ClipboardReceiver
+ * per supportare copy/paste.
  */
 public class MouseEventHandler implements ClipboardReceiver {
 
     private final Pane drawingPane;
     private final List<AbstractShape> currentShapes;
 
+    private String text;
+    private double toolbarHeight = 50;
+    private boolean toolbarHeightInitialized = false;
     private Shape selectedShapeInstance;
     private String selectedShape;
     private Color strokeColor;
@@ -42,13 +47,21 @@ public class MouseEventHandler implements ClipboardReceiver {
     private double origX1, origY1, origX2, origY2;
     private double origX, origY;
     private double origCenterX, origCenterY;
+    private double origRadiusX, origRadiusY;
     private double resizeAnchorX, resizeAnchorY;
+    private double startMouseX, startMouseY;
+    private double lastMouseX, lastMouseY;
 
     private static final double HANDLE_RADIUS = 6.0;
     private static final double ELLIPSE_BORDER_TOLERANCE = 6.0;
 
     private Shape shapeToPaste;
     private Shape clipboardBuffer;
+
+    private boolean isDragging = false;
+    private double pressX, pressY;
+
+    private StackUndoInvoker invoker;
 
     public enum ResizeMode {
         NONE,
@@ -61,8 +74,9 @@ public class MouseEventHandler implements ClipboardReceiver {
     /**
      * Costruisce un handler per il Pane e la lista di shape correnti.
      *
-     * @param drawingPane   il Pane su cui disegnare; non può essere {@code null}.
-     * @param currentShapes la lista di shape create; non può essere {@code null}.
+     * @param drawingPane il Pane su cui disegnare; non può essere {@code null}.
+     * @param currentShapes la lista di shape create; non può essere
+     * {@code null}.
      */
     public MouseEventHandler(Pane drawingPane, List<AbstractShape> currentShapes) {
         this.drawingPane = drawingPane;
@@ -70,7 +84,12 @@ public class MouseEventHandler implements ClipboardReceiver {
         this.shapeToPaste = null;
     }
 
-     /**
+    public void setToolbarHeight(double toolbarHeight) {
+        this.toolbarHeight = toolbarHeight;
+        this.toolbarHeightInitialized = true;
+    }
+
+    /**
      * Seleziona il tipo di shape da disegnare (es. "Linea", "Rettangolo", ...).
      *
      * @param tipo nome del tipo di shape.
@@ -79,7 +98,7 @@ public class MouseEventHandler implements ClipboardReceiver {
         this.selectedShape = selectedShape;
     }
 
-     /**
+    /**
      * Imposta il colore del bordo delle nuove shape.
      *
      * @param strokeColor il colore di contorno.
@@ -88,7 +107,7 @@ public class MouseEventHandler implements ClipboardReceiver {
         this.strokeColor = strokeColor;
     }
 
-      /**
+    /**
      * Imposta il colore di riempimento delle nuove shape.
      *
      * @param fillColor il colore di riempimento.
@@ -131,12 +150,17 @@ public class MouseEventHandler implements ClipboardReceiver {
     }
 
     /**
-     * Attiva o disattiva l'elaborazione degli eventi per creare/modificare shape.
+     * Attiva o disattiva l'elaborazione degli eventi per creare/modificare
+     * shape.
      *
      * @param active {@code true} per abilitare, {@code false} per ignorare.
      */
     public void setToolActive(boolean active) {
         this.toolActive = active;
+    }
+
+    public void setInvoker(StackUndoInvoker invoker) {
+        this.invoker = invoker;
     }
 
     private boolean isNearLine(double px, double py, double x1, double y1, double x2, double y2, double tolerance) {
@@ -157,12 +181,18 @@ public class MouseEventHandler implements ClipboardReceiver {
     }
 
     /**
-     * Evento mouse pressed: inizia creazione, selezione o avvio di drag/resize.
+     * Evento mouse pressed: inizia la possibile creazione, selezione,
+     * spostamento o ridimensionamento di una shape. Non crea più immediatamente
+     * la figura, ma salva le coordinate iniziali.
      *
-     * @param e evento di pressione del mouse.
+     * @param e evento di pressione del mouse
      */
     public void onPressed(MouseEvent e) {
-        double x = e.getX(), y = e.getY();
+        double x = e.getX();
+        double y = e.getY();
+        isDragging = false;
+        pressX = x;
+        pressY = y;
 
         if (selectedShapeInstance != null) {
             Node node = selectedShapeInstance.getNode();
@@ -206,50 +236,24 @@ public class MouseEventHandler implements ClipboardReceiver {
                 }
 
                 if (currentResizeMode != ResizeMode.NONE) {
-                    if (node instanceof Rectangle) {
-                        Rectangle r = (Rectangle) node;
-
-                        switch (currentResizeMode) {
-                            case RECT_TOP_LEFT -> {
-                                resizeAnchorX = r.getX() + r.getWidth();
-                                resizeAnchorY = r.getY() + r.getHeight();
-                            }
-                            case RECT_TOP_RIGHT -> {
-                                resizeAnchorX = r.getX();
-                                resizeAnchorY = r.getY() + r.getHeight();
-                            }
-                            case RECT_BOTTOM_LEFT -> {
-                                resizeAnchorX = r.getX() + r.getWidth();
-                                resizeAnchorY = r.getY();
-                            }
-                            case RECT_BOTTOM_RIGHT -> {
-                                resizeAnchorX = r.getX();
-                                resizeAnchorY = r.getY();
-                            }
-                            case RECT_LEFT, RECT_RIGHT -> {
-                                resizeAnchorX = (currentResizeMode == ResizeMode.RECT_LEFT
-                                        ? r.getX() + r.getWidth()
-                                        : r.getX());
-                                resizeAnchorY = y;
-                            }
-                            case RECT_TOP, RECT_BOTTOM -> {
-                                resizeAnchorX = x;
-                                resizeAnchorY = (currentResizeMode == ResizeMode.RECT_TOP
-                                        ? r.getY() + r.getHeight()
-                                        : r.getY());
-                            }
-                            default -> {
-                            }
-                        }
-                    } else if (node instanceof Ellipse ell) {
-                        double cx = ell.getCenterX();
-                        double cy = ell.getCenterY();
-                        resizeAnchorX = 2 * cx - x;
-                        resizeAnchorY = 2 * cy - y;
-                    }
+                    resizeAnchorX = switch (currentResizeMode) {
+                        case RECT_TOP_LEFT, RECT_BOTTOM_LEFT, RECT_LEFT ->
+                            rect.getX() + rect.getWidth();
+                        case RECT_TOP_RIGHT, RECT_BOTTOM_RIGHT, RECT_RIGHT ->
+                            rect.getX();
+                        default ->
+                            x;
+                    };
+                    resizeAnchorY = switch (currentResizeMode) {
+                        case RECT_TOP_LEFT, RECT_TOP_RIGHT, RECT_TOP ->
+                            rect.getY() + rect.getHeight();
+                        case RECT_BOTTOM_LEFT, RECT_BOTTOM_RIGHT, RECT_BOTTOM ->
+                            rect.getY();
+                        default ->
+                            y;
+                    };
                     return;
                 }
-
             } else if (node instanceof Ellipse ell) {
                 double cx = ell.getCenterX(), cy = ell.getCenterY();
                 double rx = ell.getRadiusX(), ry = ell.getRadiusY();
@@ -260,6 +264,9 @@ public class MouseEventHandler implements ClipboardReceiver {
                     currentResizeMode = ResizeMode.ELLIPSE_BORDER;
                     return;
                 }
+            } else if (node instanceof javafx.scene.text.Text textNode) {
+                origX = textNode.getX();
+                origY = textNode.getY();
             }
         }
 
@@ -283,6 +290,8 @@ public class MouseEventHandler implements ClipboardReceiver {
             } else if (node instanceof Ellipse ell) {
                 origCenterX = ell.getCenterX();
                 origCenterY = ell.getCenterY();
+                origRadiusX = ell.getRadiusX();
+                origRadiusY = ell.getRadiusY();
             }
             return;
         }
@@ -292,39 +301,67 @@ public class MouseEventHandler implements ClipboardReceiver {
         }
 
         ShapeCreator creator = ConcreteShapeCreator.getCreator(selectedShape);
-        AbstractShape baseShape = (AbstractShape) creator.createShape(x, y, strokeColor);
+        AbstractShape baseShape = null;
+
+        if ("Testo".equals(selectedShape)) {
+            if (text == null || text.isEmpty()) {
+                System.out.println("Testo vuoto, shape testo non creata.");
+                return;
+            }
+            baseShape = (AbstractShape) creator.createShape(text, x, y, strokeColor);
+        } else {
+            // Per rettangoli, ellissi, linee, crea la shape con coordinate iniziali
+            baseShape = (AbstractShape) creator.createShape(x, y, strokeColor);
+        }
+
+        if (baseShape == null) {
+            System.out.println("Errore nella creazione della shape");
+            return;
+        }
+
         currentShapes.add(baseShape);
 
         tempShape = new StrokeDecorator(baseShape, strokeColor);
         tempShape = new FillDecorator(tempShape, fillColor);
         tempShape.getNode().setUserData(tempShape);
         drawingPane.getChildren().add(tempShape.getNode());
+
     }
 
     /**
-     * Evento mouse dragged: aggiorna posizione o dimensioni durante il drag/resize.
+     * Evento mouse dragged: se è attivo uno strumento di disegno, crea e
+     * aggiorna la forma in base alla posizione corrente. Se una shape è
+     * selezionata, la sposta o la ridimensiona.
      *
-     * @param e evento di trascinamento del mouse.
+     * @param e evento di trascinamento del mouse
      */
     public void onDragged(MouseEvent e) {
         double x = Math.min(Math.max(0, e.getX()), drawingPane.getWidth());
-        double y = Math.min(Math.max(0, e.getY()), drawingPane.getHeight());
+        double y = Math.min(Math.max(toolbarHeight, e.getY()), drawingPane.getHeight());
 
+        lastMouseX = x;
+        lastMouseY = y;
+
+        if (!isDragging) {
+            isDragging = true;
+        }
+
+        // Resize attivo
         if (selectedShapeInstance != null && currentResizeMode != ResizeMode.NONE) {
             Node node = selectedShapeInstance.getNode();
             switch (currentResizeMode) {
                 case LINE_START -> {
-                    javafx.scene.shape.Line l = (javafx.scene.shape.Line) node;
+                    Line l = (Line) node;
                     l.setStartX(x);
                     l.setStartY(y);
                 }
                 case LINE_END -> {
-                    javafx.scene.shape.Line l = (javafx.scene.shape.Line) node;
+                    Line l = (Line) node;
                     l.setEndX(x);
                     l.setEndY(y);
                 }
                 case RECT_TOP_LEFT, RECT_TOP_RIGHT, RECT_BOTTOM_LEFT, RECT_BOTTOM_RIGHT -> {
-                    javafx.scene.shape.Rectangle r = (javafx.scene.shape.Rectangle) node;
+                    Rectangle r = (Rectangle) node;
                     double newX = Math.min(x, resizeAnchorX);
                     double newY = Math.min(y, resizeAnchorY);
                     double newW = Math.max(1, Math.abs(resizeAnchorX - x));
@@ -335,21 +372,21 @@ public class MouseEventHandler implements ClipboardReceiver {
                     r.setHeight(newH);
                 }
                 case RECT_LEFT, RECT_RIGHT -> {
-                    javafx.scene.shape.Rectangle r = (javafx.scene.shape.Rectangle) node;
+                    Rectangle r = (Rectangle) node;
                     double newX = Math.min(x, resizeAnchorX);
                     double newW = Math.max(1, Math.abs(resizeAnchorX - x));
                     r.setX(newX);
                     r.setWidth(newW);
                 }
                 case RECT_TOP, RECT_BOTTOM -> {
-                    javafx.scene.shape.Rectangle r = (javafx.scene.shape.Rectangle) node;
+                    Rectangle r = (Rectangle) node;
                     double newY = Math.min(y, resizeAnchorY);
                     double newH = Math.max(1, Math.abs(resizeAnchorY - y));
                     r.setY(newY);
                     r.setHeight(newH);
                 }
                 case ELLIPSE_BORDER -> {
-                    javafx.scene.shape.Ellipse ell = (javafx.scene.shape.Ellipse) node;
+                    Ellipse ell = (Ellipse) node;
                     double cx = (x + resizeAnchorX) / 2;
                     double cy = (y + resizeAnchorY) / 2;
                     double radiusX = Math.max(1, Math.abs(x - resizeAnchorX) / 2);
@@ -365,59 +402,151 @@ public class MouseEventHandler implements ClipboardReceiver {
             return;
         }
 
+        // Spostamento
         if (selectedShapeInstance != null) {
             double dx = x - moveAnchorX;
             double dy = y - moveAnchorY;
             Node node = selectedShapeInstance.getNode();
 
-            if (node instanceof javafx.scene.shape.Line line) {
-                double newStartX = origX1 + dx;
-                double newStartY = origY1 + dy;
-                double newEndX = origX2 + dx;
-                double newEndY = origY2 + dy;
+            if (node instanceof Line line) {
+                line.setStartX(line.getStartX() + dx);
+                line.setStartY(line.getStartY() + dy);
+                line.setEndX(line.getEndX() + dx);
+                line.setEndY(line.getEndY() + dy);
+            } else if (node instanceof Rectangle rect) {
+                rect.setX(rect.getX() + dx);
+                rect.setY(rect.getY() + dy);
+            } else if (node instanceof Ellipse ell) {
+                ell.setCenterX(ell.getCenterX() + dx);
+                ell.setCenterY(ell.getCenterY() + dy);
+            } else if (node instanceof javafx.scene.text.Text textNode) {
+                // Sposta il testo aggiornando X e Y
+                textNode.setX(textNode.getX() + dx);
+                textNode.setY(textNode.getY() + dy);
 
-                newStartX = Math.max(0, Math.min(newStartX, drawingPane.getWidth()));
-                newStartY = Math.max(0, Math.min(newStartY, drawingPane.getHeight()));
-                newEndX = Math.max(0, Math.min(newEndX, drawingPane.getWidth()));
-                newEndY = Math.max(0, Math.min(newEndY, drawingPane.getHeight()));
+                // Aggiorna ancore per il prossimo spostamento
+                moveAnchorX = x;
+                moveAnchorY = y;
 
-                line.setStartX(newStartX);
-                line.setStartY(newStartY);
-                line.setEndX(newEndX);
-                line.setEndY(newEndY);
-            } else if (node instanceof javafx.scene.shape.Rectangle rect) {
-                double newX = Math.max(0, Math.min(origX + dx, drawingPane.getWidth() - rect.getWidth()));
-                double newY = Math.max(0, Math.min(origY + dy, drawingPane.getHeight() - rect.getHeight()));
-                rect.setX(newX);
-                rect.setY(newY);
-            } else if (node instanceof javafx.scene.shape.Ellipse ell) {
-                double radiusX = ell.getRadiusX();
-                double radiusY = ell.getRadiusY();
-                double newCX = Math.max(radiusX, Math.min(origCenterX + dx, drawingPane.getWidth() - radiusX));
-                double newCY = Math.max(radiusY, Math.min(origCenterY + dy, drawingPane.getHeight() - radiusY));
-                ell.setCenterX(newCX);
-                ell.setCenterY(newCY);
+                return;
             }
-            return;
+            // Aggiorna le ancore per il prossimo movimento
+            moveAnchorX = x;
+            moveAnchorY = y;
+
         }
 
-        if (toolActive && selectedShape != null && tempShape != null) {
-            tempShape.onDrag(x, y);
+        // Disegno figura nuova
+        if (toolActive && selectedShape != null) {
+            if (!isDragging) {
+                isDragging = true;
+                ShapeCreator creator = ConcreteShapeCreator.getCreator(selectedShape);
+                AbstractShape baseShape = (AbstractShape) creator.createShape(pressX, pressY, strokeColor);
+                currentShapes.add(baseShape);
+                tempShape = new StrokeDecorator(baseShape, strokeColor);
+                tempShape = new FillDecorator(tempShape, fillColor);
+                tempShape.getNode().setUserData(tempShape);
+                drawingPane.getChildren().add(tempShape.getNode());
+            }
+
+            if (tempShape != null) {
+                tempShape.onDrag(x, y);
+            }
         }
     }
 
     /**
-     * Evento mouse released: completa creazione, spostamento o resize della shape.
+     * Evento mouse released: completa le operazioni attive. Se una figura era
+     * in fase di disegno ma non è stata davvero trascinata, viene rimossa.
+     * Altrimenti, viene finalizzata con {@code onRelease()}.
      *
-     * @param e evento di rilascio del mouse.
+     * @param e evento di rilascio del mouse
      */
     public void onReleased(MouseEvent e) {
-        if (currentResizeMode != ResizeMode.NONE) {
+        if (currentResizeMode != ResizeMode.NONE && selectedShapeInstance != null) {
+            javafx.scene.shape.Shape fx = (javafx.scene.shape.Shape) selectedShapeInstance.getNode();
+
+            if (fx instanceof Rectangle rect) {
+                double oldX = origX;
+                double oldY = origY;
+                double oldW = rect.getWidth();
+                double oldH = rect.getHeight();
+
+                double newX = rect.getX();
+                double newY = rect.getY();
+                double newW = rect.getWidth();
+                double newH = rect.getHeight();
+
+                applyUndoableStrategy(new Resize(selectedShapeInstance,
+                        oldX, oldY, oldW, oldH, newX, newY, newW, newH));
+
+            } else if (fx instanceof Ellipse ell) {
+                double oldCX = origCenterX;
+                double oldCY = origCenterY;
+                double oldRX = ell.getRadiusX();
+                double oldRY = ell.getRadiusY();
+
+                double newCX = ell.getCenterX();
+                double newCY = ell.getCenterY();
+                double newRX = ell.getRadiusX();
+                double newRY = ell.getRadiusY();
+
+                applyUndoableStrategy(new Resize(selectedShapeInstance,
+                        oldCX, oldCY, oldRX, oldRY, newCX, newCY, newRX, newRY));
+
+            } else if (fx instanceof Line line) {
+                double oldStartX = origX1;
+                double oldStartY = origY1;
+                double oldEndX = origX2;
+                double oldEndY = origY2;
+
+                double newStartX = line.getStartX();
+                double newStartY = line.getStartY();
+                double newEndX = line.getEndX();
+                double newEndY = line.getEndY();
+
+                applyUndoableStrategy(new Resize(selectedShapeInstance,
+                        oldStartX, oldStartY, oldEndX, oldEndY,
+                        newStartX, newStartY, newEndX, newEndY));
+            }
+
             currentResizeMode = ResizeMode.NONE;
             return;
         }
 
         if (selectedShapeInstance != null) {
+            Node node = selectedShapeInstance.getNode();
+
+            if (node instanceof Rectangle rect) {
+                double newX = rect.getX();
+                double newY = rect.getY();
+                if (origX != newX || origY != newY) {
+                    applyUndoableStrategy(new Move(selectedShapeInstance, origX, origY, newX, newY));
+                }
+            } else if (node instanceof Ellipse ell) {
+                double newCX = ell.getCenterX();
+                double newCY = ell.getCenterY();
+                if (origCenterX != newCX || origCenterY != newCY) {
+                    applyUndoableStrategy(new Move(selectedShapeInstance, origCenterX, origCenterY, newCX, newCY));
+                }
+            } else if (node instanceof Line line) {
+                double newStartX = line.getStartX();
+                double newStartY = line.getStartY();
+                double newEndX = line.getEndX();
+                double newEndY = line.getEndY();
+                if (origX1 != newStartX || origY1 != newStartY || origX2 != newEndX || origY2 != newEndY) {
+                    applyUndoableStrategy(new Move(selectedShapeInstance,
+                            origX1, origY1, origX2, origY2,
+                            newStartX, newStartY, newEndX, newEndY));
+                }
+            } else if (node instanceof javafx.scene.text.Text textNode) {
+                double newX = textNode.getX();
+                double newY = textNode.getY();
+                if (origX != newX || origY != newY) {
+                    applyUndoableStrategy(new Move(selectedShapeInstance, origX, origY, newX, newY));
+                }
+            }
+
             return;
         }
 
@@ -425,17 +554,25 @@ public class MouseEventHandler implements ClipboardReceiver {
             return;
         }
 
+        // Click senza trascinamento = annulla creazione
+        if (!isDragging && tempShape != null) {
+            drawingPane.getChildren().remove(tempShape.getNode());
+            currentShapes.remove(AbstractShape.unwrapToAbstract(tempShape));
+            tempShape = null;
+            return;
+        }
+
+        // Rilascio dopo vero trascinamento: crea figura
         if (tempShape != null) {
             tempShape.onRelease();
+            applyUndoableStrategy(new Create(new ShapeManager(currentShapes, drawingPane), tempShape));
             tempShape = null;
+            toolActive = false;
         }
+
+        isDragging = false;
     }
 
-    /**
-     * Evento mouse click: seleziona shape esistenti o gestisce il paste-mode.
-     *
-     * @param e evento di click del mouse.
-     */
     public void onMouseClick(MouseEvent e) {
         // gestione logica incolla
         if (shapeToPaste != null) {
@@ -524,6 +661,16 @@ public class MouseEventHandler implements ClipboardReceiver {
             fx.setEffect(null);
             selectedShapeInstance = null;
         }
+    }
+
+    public void applyUndoableStrategy(MouseMultiInputs command) {
+        MultiMouseInputsStrategy strategy = new MultiMouseInputsCommandStackInvoker(command, invoker);
+        MultiMouseInputsContext context = new MultiMouseInputsContext(strategy);
+        context.onReleased(null); // Trigger minimo, sufficiente per isExecutable → true
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
 }

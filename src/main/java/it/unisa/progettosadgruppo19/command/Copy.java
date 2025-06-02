@@ -6,7 +6,7 @@ import it.unisa.progettosadgruppo19.model.shapes.Shape;
 /**
  * Comando undoable per copiare una {@link Shape} nel {@link ClipboardReceiver}.
  */
-public class Copy implements UndoableCommand {
+public class Copy implements Command {
 
     private final ClipboardReceiver receiver;
     private final Shape shape;
@@ -32,13 +32,4 @@ public class Copy implements UndoableCommand {
         System.out.println("[COPY] Figura copiata: " + shape.getClass().getSimpleName());
     }
 
-    /**
-     * Annulla l'operazione di copia svuotando il clipboard.
-     * Stampa un messaggio di debug su console.
-     */
-    @Override
-    public void undo() {
-        receiver.setClipboard(null); // svuota il buffer
-        System.out.println("[UNDO COPY] Clipboard svuotato");
-    }
 }

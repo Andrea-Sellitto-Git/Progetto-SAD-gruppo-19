@@ -1,10 +1,9 @@
 package it.unisa.progettosadgruppo19.controller;
 
-import it.unisa.progettosadgruppo19.decorator.FillDecorator;
-import it.unisa.progettosadgruppo19.decorator.StrokeDecorator;
 import it.unisa.progettosadgruppo19.model.shapes.AbstractShape;
 import it.unisa.progettosadgruppo19.model.shapes.*;
 import it.unisa.progettosadgruppo19.command.*;
+import it.unisa.progettosadgruppo19.factory.TextShapeCreator;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -17,19 +16,33 @@ import java.util.Optional;
 
 import java.util.ArrayList;
 import java.util.List;
+import javafx.application.Platform;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
 
 /**
- * Controller principale per l'interfaccia di disegno.
- * Gestisce la toolbar, il canvas, i comandi di file (salva/carica),
- * undo/redo e l'applicazione di stroke, fill e zoom.
+ * Controller principale per l'interfaccia di disegno. Gestisce la toolbar, il
+ * canvas, i comandi di file (salva/carica), undo/redo e l'applicazione di
+ * stroke, fill e zoom.
  */
 public class Controller {
 
     @FXML
+    private Spinner<Integer> fontSizeSpinner;
+
+    @FXML
+    private TextField textInputField;
+
+    @FXML
+    private Button textButton;
+
+    @FXML
     private Pane drawingPane;
     @FXML
+    private ToolBar toolbar;
+    @FXML
     private Button lineButton, rectButton, ellipseButton, saveButton, loadButton, deleteButton, copyButton,
-            cutButton, pasteButton, zoomInButton, zoomOutButton, bringToFrontButton, sendToBackButton,
+            cutButton, pasteButton, zoomInButton, zoomOutButton, bringToFrontButton, sendToBackButton, undoButton,
             gridButton;
     @FXML
     private ColorPicker strokePicker, fillPicker;
@@ -54,6 +67,7 @@ public class Controller {
      */
     @FXML
     public void initialize() {
+        fontSizeSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(8, 72, 12));
         drawingPane.getTransforms().add(scaleTransform);
 
         mouseHandler = new MouseEventHandler(drawingPane, currentShapes);
@@ -62,6 +76,10 @@ public class Controller {
 
         mouseHandler.setSelectedShape(selectedShape);
         mouseHandler.setToolActive(true);
+        mouseHandler.setInvoker(commandInvoker);
+        Platform.runLater(() -> {
+            mouseHandler.setToolbarHeight(toolbar.getHeight());
+        });
 
         strokePicker.setValue(javafx.scene.paint.Color.BLACK);
         fillPicker.setValue(javafx.scene.paint.Color.TRANSPARENT);
@@ -105,6 +123,7 @@ public class Controller {
             Shape selected = mouseHandler.getSelectedShapeInstance();
             if (selected != null) {
                 int maxIndex = drawingPane.getChildren().size() - 1;
+                System.out.println("[FRONT] Portando " + selected.getClass().getSimpleName() + " all'indice " + maxIndex);
                 commandInvoker.execute(new ZLevelsToFront(shapeManager, selected, maxIndex));
             }
         });
@@ -113,9 +132,12 @@ public class Controller {
             Shape selected = mouseHandler.getSelectedShapeInstance();
             if (selected != null) {
                 int gridCount = gridManager.getGridLayerCount();
+                System.out.println("[BACK] Portando " + selected.getClass().getSimpleName() + " all'indice " + gridCount);
                 commandInvoker.execute(new ZLevelsToBack(shapeManager, selected, gridCount));
             }
         });
+
+        undoButton.setOnAction(e -> onUndo());
 
         gridButton.setOnAction(e -> {
             // se la griglia non è già presente, chiedi la dimensione
@@ -139,17 +161,17 @@ public class Controller {
                         alert.showAndWait();
                     }
                 });
-            }
-            // se la griglia è già visibile, la rimuoviamo direttamente
+            } // se la griglia è già visibile, la rimuoviamo direttamente
             else {
                 gridManager.toggleGrid();
                 gridButton.setStyle("");
             }
         });
-            zoomInButton.setOnAction(e -> {
-                double s = zoomManager.zoomIn();
-                scaleTransform.setX(s);
-                scaleTransform.setY(s);
+
+        zoomInButton.setOnAction(e -> {
+            double s = zoomManager.zoomIn();
+            scaleTransform.setX(s);
+            scaleTransform.setY(s);
         });
 
         zoomOutButton.setOnAction(e -> {
@@ -174,6 +196,15 @@ public class Controller {
         drawingPane.setOnMouseDragged(mouseHandler::onDragged);
         drawingPane.setOnMouseReleased(mouseHandler::onReleased);
         drawingPane.setOnMouseClicked(mouseHandler::onMouseClick);
+
+        textButton.setOnAction(e -> setTool("Testo"));
+
+        fontSizeSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            Shape selected = mouseHandler.getSelectedShapeInstance();
+            if (selected instanceof TextShape textShape) {
+                textShape.setFontSize(newVal);
+            }
+        });
     }
     
     private void rotateSelected(double value){
@@ -193,7 +224,8 @@ public class Controller {
     /**
      * Seleziona il tipo di shape da creare.
      *
-     * @param tipo nome del tipo di shape ("Linea", "Rettangolo", "Ellisse", ecc.)
+     * @param tipo nome del tipo di shape ("Linea", "Rettangolo", "Ellisse",
+     * ecc.)
      */
     private void setTool(String tipo) {
         selectedShape = tipo;
@@ -202,76 +234,96 @@ public class Controller {
         mouseHandler.setFillColor(fillPicker.getValue());
         mouseHandler.setToolActive(true);
         mouseHandler.unselectShape();
+
+        // Se attivo il testo, disabilita il mouseHandler per disegno shape
+        if ("Testo".equals(tipo)) {
+            drawingPane.setOnMouseClicked(this::onCanvasClickForText);
+        } else {
+            // Ripristina il comportamento standard
+            drawingPane.setOnMouseClicked(mouseHandler::onMouseClick);
+        }
     }
 
-    /** Esegue il comando di salvataggio su file. */
-    private void onSave() {
+
+/**
+ * Esegue il comando di salvataggio su file.
+ */
+private void onSave() {
         Stage stage = (Stage) saveButton.getScene().getWindow();
         new Save(stage, currentShapes, fileManager).execute();
     }
 
-    /** Esegue il comando di caricamento da file. */
+    /**
+     * Esegue il comando di caricamento da file.
+     */
     private void onLoad() {
         Stage stage = (Stage) loadButton.getScene().getWindow();
         new Load(stage, currentShapes, drawingPane, fileManager).execute();
     }
 
-    /** Applica il colore di contorno (stroke) alla shape selezionata. */
+    /**
+     * Applica il colore di contorno (stroke) alla shape selezionata.
+     */
     private void applyStroke() {
         Shape selected = mouseHandler.getSelectedShapeInstance();
         if (selected != null) {
-            Shape decorated = new StrokeDecorator(selected, strokePicker.getValue());
-            int index = drawingPane.getChildren().indexOf(selected.getNode());
-            drawingPane.getChildren().set(index, decorated.getNode());
-            decorated.getNode().setUserData(decorated);
-            mouseHandler.setSelectedShapeInstance(decorated);
+            Color oldStroke = (Color) ((javafx.scene.shape.Shape) selected.getNode()).getStroke();
+            Color newStroke = strokePicker.getValue();
+            mouseHandler.applyUndoableStrategy(new ChangeStroke(selected, oldStroke, newStroke));
         }
     }
 
-    /** Applica il colore di riempimento (fill) alla shape selezionata. */
+    /**
+     * Applica il colore di riempimento (fill) alla shape selezionata.
+     */
     private void applyFill() {
         Shape selected = mouseHandler.getSelectedShapeInstance();
         if (selected != null) {
-            Shape decorated = new FillDecorator(selected, fillPicker.getValue());
-            int index = drawingPane.getChildren().indexOf(selected.getNode());
-            drawingPane.getChildren().set(index, decorated.getNode());
-            decorated.getNode().setUserData(decorated);
-            mouseHandler.setSelectedShapeInstance(decorated);
+            Color oldFill = (Color) ((javafx.scene.shape.Shape) selected.getNode()).getFill();
+            Color newFill = fillPicker.getValue();
+            mouseHandler.applyUndoableStrategy(new ChangeFill(selected, oldFill, newFill));
         }
     }
 
-    
     @FXML
-    public void handlePaste() {
+public void handlePaste() {
         drawingPane.setOnMouseClicked(event -> {
             commandInvoker.execute(new Paste(mouseHandler, shapeManager, event.getX(), event.getY()));
             drawingPane.setOnMouseClicked(mouseHandler::onMouseClick); // Ripristina il comportamento standard
         });
     }
 
-    /** Zoom avanti applicando il fattore successivo. */
+    /**
+     * Zoom avanti applicando il fattore successivo.
+     */
     @FXML
-    private void onZoomIn() {
+private void onZoomIn() {
         double s = zoomManager.zoomIn();
         scaleTransform.setX(s);
         scaleTransform.setY(s);
     }
 
-    /** Zoom avanti applicando il fattore precedente. */
+    /**
+     * Zoom avanti applicando il fattore precedente.
+     */
     @FXML
-    private void onZoomOut() {
+private void onZoomOut() {
         double s = zoomManager.zoomOut();
         scaleTransform.setX(s);
         scaleTransform.setY(s);
     }
 
-    /** Annulla l'ultimo comando eseguito (undo). */
+    /**
+     * Annulla l'ultimo comando eseguito (undo).
+     */
     @FXML
-    private void onUndo() {
+private void onUndo() {
         commandInvoker.undo();
     }
 
-    /** Attiva la modalità click-per-incollare. */
+    /**
+     * Attiva la modalità click-per-incollare.
+     */
     private void enablePasteMode() {
         System.out.println("[PASTE MODE] Attivato: clicca sul canvas per incollare");
         drawingPane.setOnMouseClicked(event -> {
@@ -279,5 +331,63 @@ public class Controller {
             commandInvoker.execute(new Paste(mouseHandler, shapeManager, event.getX(), event.getY()));
             drawingPane.setOnMouseClicked(mouseHandler::onMouseClick);
         });
+    }
+    
+    private void onCanvasClickForText(MouseEvent event) {
+        textFinalized = false;
+
+        double x = event.getX();
+        double y = event.getY();
+
+        TextField textField = new TextField();
+        textField.setLayoutX(x);
+        textField.setLayoutY(y);
+        textField.setPrefColumnCount(10);
+
+        drawingPane.getChildren().add(textField);
+        textField.requestFocus();
+
+        // Disattiva subito la modalità testo dopo il primo click
+        setTool(null); // Questo ripristina il comportamento del mouseHandler
+
+        textField.setOnAction(e -> finalizeText(textField));
+        textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+            if (!isNowFocused) {
+                finalizeText(textField);
+            }
+        });
+    }
+
+    private boolean textFinalized = false;
+
+    private void finalizeText(TextField textField) {
+        if (textFinalized) {
+            return;  // esce se già chiamato
+        }
+        textFinalized = true;
+
+        setTool(null); // Questo ripristina il mouseHandler normale
+
+        String text = textField.getText();
+
+        if (text != null && !text.trim().isEmpty()) {
+            double x = textField.getLayoutX();
+            double y = textField.getLayoutY() + textField.getHeight() - 5;
+
+            double fontSize = fontSizeSpinner.getValue();
+            
+            TextShapeCreator factory = new TextShapeCreator();
+            Shape shape = factory.createShape(
+                    text, x, y,
+                    strokePicker.getValue() != null ? strokePicker.getValue() : javafx.scene.paint.Color.BLACK,
+                    fontSize
+            );
+
+            currentShapes.add((AbstractShape) shape);
+            commandInvoker.execute(new Add(shapeManager, shape));
+            mouseHandler.setSelectedShapeInstance(shape);
+        }
+
+        drawingPane.getChildren().remove(textField); // Rimuove il box di input
     }
 }
