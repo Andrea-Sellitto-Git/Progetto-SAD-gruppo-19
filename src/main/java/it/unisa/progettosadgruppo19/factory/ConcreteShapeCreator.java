@@ -1,9 +1,5 @@
 package it.unisa.progettosadgruppo19.factory;
 
-import it.unisa.progettosadgruppo19.model.shapes.LineShape;
-import it.unisa.progettosadgruppo19.model.shapes.RectangleShape;
-import it.unisa.progettosadgruppo19.model.shapes.EllipseShape;
-
 /**
  * Factory concreta che restituisce lo ShapeCreator corrispondente al tipo
  * testuale fornito.
@@ -25,6 +21,8 @@ public class ConcreteShapeCreator {
                 new RectangleShapeCreator();
             case "Ellisse" ->
                 new EllipseShapeCreator();
+            case "Testo" ->
+                new TextShapeCreator();
             default ->
                 throw new IllegalArgumentException("Tipo non supportato: " + tipo);
         };

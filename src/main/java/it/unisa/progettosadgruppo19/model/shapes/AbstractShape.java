@@ -1,11 +1,6 @@
 package it.unisa.progettosadgruppo19.model.shapes;
 
 import it.unisa.progettosadgruppo19.decorator.ShapeDecorator;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 
@@ -18,17 +13,18 @@ public abstract class AbstractShape implements Shape {
     /**
      * Nodo JavaFX deputato al rendering (Line, Rectangle, Ellipse).
      */
-    protected final javafx.scene.shape.Shape node;
-
+    protected final Node node;
     /**
      * Costruisce una AbstractShape avvolgendo il nodo specificato.
      *
      * @param node nodo JavaFX della forma
      */
-    public AbstractShape(javafx.scene.shape.Shape node) {
+    public AbstractShape(Node node) {
         this.node = node;
-        node.setFill(Color.TRANSPARENT);
-        node.setStroke(Color.BLACK);
+        if (node instanceof javafx.scene.shape.Shape s) {
+            s.setFill(Color.TRANSPARENT);
+            s.setStroke(Color.BLACK);
+        }
     }
 
     /**
@@ -97,12 +93,10 @@ public abstract class AbstractShape implements Shape {
 
     
     public void moveBy(double dx, double dy) {
-        javafx.scene.shape.Shape node = (javafx.scene.shape.Shape) getNode();
         node.setTranslateX(node.getTranslateX() + dx);
         node.setTranslateY(node.getTranslateY() + dy);
-        //node.setX(node.getTranslateX() + dx);
-        //node.setY(node.getTranslateY() + dy);
     }
+
 
     public static AbstractShape unwrapToAbstract(Shape shape) {
         while (shape instanceof ShapeDecorator) {

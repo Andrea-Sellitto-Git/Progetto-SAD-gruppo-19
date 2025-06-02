@@ -33,7 +33,10 @@ public class ShapeManager implements ShapeManagerReceiver, ZOrderReceiver {
     public void addShape(Shape shape) {
         AbstractShape abs = AbstractShape.unwrapToAbstract(shape);
         currentShapes.add(abs);
-        drawingPane.getChildren().add(shape.getNode());
+        if (!drawingPane.getChildren().contains(shape.getNode())) {
+            drawingPane.getChildren().add(shape.getNode());
+        }
+
         shape.getNode().setUserData(shape);
     }
 

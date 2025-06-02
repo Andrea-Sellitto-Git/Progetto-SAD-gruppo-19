@@ -31,6 +31,7 @@ public class MouseEventHandler implements ClipboardReceiver {
     private final Pane drawingPane;
     private final List<AbstractShape> currentShapes;
 
+    private String text;
     private double toolbarHeight = 50;
     private boolean toolbarHeightInitialized = false;
     private Shape selectedShapeInstance;
@@ -263,6 +264,9 @@ public class MouseEventHandler implements ClipboardReceiver {
                     currentResizeMode = ResizeMode.ELLIPSE_BORDER;
                     return;
                 }
+            } else if (node instanceof javafx.scene.text.Text textNode) {
+                origX = textNode.getX();
+                origY = textNode.getY();
             }
         }
 
@@ -292,15 +296,35 @@ public class MouseEventHandler implements ClipboardReceiver {
             return;
         }
 
-        if (toolActive && selectedShape != null && tempShape == null) {
-            ShapeCreator creator = ConcreteShapeCreator.getCreator(selectedShape);
-            AbstractShape baseShape = (AbstractShape) creator.createShape(x, y, strokeColor);
-            currentShapes.add(baseShape);
-            tempShape = new StrokeDecorator(baseShape, strokeColor);
-            tempShape = new FillDecorator(tempShape, fillColor);
-            tempShape.getNode().setUserData(tempShape);
-            drawingPane.getChildren().add(tempShape.getNode());
+        if (!toolActive || selectedShape == null) {
+            return;
         }
+
+        ShapeCreator creator = ConcreteShapeCreator.getCreator(selectedShape);
+        AbstractShape baseShape = null;
+
+        if ("Testo".equals(selectedShape)) {
+            if (text == null || text.isEmpty()) {
+                System.out.println("Testo vuoto, shape testo non creata.");
+                return;
+            }
+            baseShape = (AbstractShape) creator.createShape(text, x, y, strokeColor);
+        } else {
+            // Per rettangoli, ellissi, linee, crea la shape con coordinate iniziali
+            baseShape = (AbstractShape) creator.createShape(x, y, strokeColor);
+        }
+
+        if (baseShape == null) {
+            System.out.println("Errore nella creazione della shape");
+            return;
+        }
+
+        currentShapes.add(baseShape);
+
+        tempShape = new StrokeDecorator(baseShape, strokeColor);
+        tempShape = new FillDecorator(tempShape, fillColor);
+        tempShape.getNode().setUserData(tempShape);
+        drawingPane.getChildren().add(tempShape.getNode());
 
     }
 
@@ -395,11 +419,21 @@ public class MouseEventHandler implements ClipboardReceiver {
             } else if (node instanceof Ellipse ell) {
                 ell.setCenterX(ell.getCenterX() + dx);
                 ell.setCenterY(ell.getCenterY() + dy);
-            }
+            } else if (node instanceof javafx.scene.text.Text textNode) {
+                // Sposta il testo aggiornando X e Y
+                textNode.setX(textNode.getX() + dx);
+                textNode.setY(textNode.getY() + dy);
 
+                // Aggiorna ancore per il prossimo spostamento
+                moveAnchorX = x;
+                moveAnchorY = y;
+
+                return;
+            }
+            // Aggiorna le ancore per il prossimo movimento
             moveAnchorX = x;
             moveAnchorY = y;
-            return;
+
         }
 
         // Disegno figura nuova
@@ -504,6 +538,12 @@ public class MouseEventHandler implements ClipboardReceiver {
                     applyUndoableStrategy(new Move(selectedShapeInstance,
                             origX1, origY1, origX2, origY2,
                             newStartX, newStartY, newEndX, newEndY));
+                }
+            } else if (node instanceof javafx.scene.text.Text textNode) {
+                double newX = textNode.getX();
+                double newY = textNode.getY();
+                if (origX != newX || origY != newY) {
+                    applyUndoableStrategy(new Move(selectedShapeInstance, origX, origY, newX, newY));
                 }
             }
 
@@ -627,6 +667,10 @@ public class MouseEventHandler implements ClipboardReceiver {
         MultiMouseInputsStrategy strategy = new MultiMouseInputsCommandStackInvoker(command, invoker);
         MultiMouseInputsContext context = new MultiMouseInputsContext(strategy);
         context.onReleased(null); // Trigger minimo, sufficiente per isExecutable → true
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
 }

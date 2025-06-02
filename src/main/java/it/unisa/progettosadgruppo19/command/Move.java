@@ -6,6 +6,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 
 public class Move implements MouseMultiInputs, UndoableCommand {
 
@@ -63,7 +64,13 @@ public class Move implements MouseMultiInputs, UndoableCommand {
             double boundedCY = Math.max(ry, Math.min(newY1, ell.getParent().getLayoutBounds().getHeight() - ry));
             ell.setCenterX(boundedCX);
             ell.setCenterY(boundedCY);
+        } else if (node instanceof Text text) {
+            double boundedX = Math.max(0, Math.min(newX1, text.getParent().getLayoutBounds().getWidth()));
+            double boundedY = Math.max(0, Math.min(newY1, text.getParent().getLayoutBounds().getHeight()));
+            text.setX(boundedX);
+            text.setY(boundedY);
         }
+
         executed = true;
     }
 
@@ -81,7 +88,11 @@ public class Move implements MouseMultiInputs, UndoableCommand {
         } else if (node instanceof Ellipse ell) {
             ell.setCenterX(oldX1);
             ell.setCenterY(oldY1);
+        } else if (node instanceof Text text) {
+            text.setX(oldX1);
+            text.setY(oldY1);
         }
+
     }
 
     @Override

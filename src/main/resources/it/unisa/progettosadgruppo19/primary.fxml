@@ -44,6 +44,8 @@
                         <Button fx:id="lineButton" text="➖" />
                         <Button fx:id="rectButton" text="◻" />
                         <Button fx:id="ellipseButton" text="◯" />
+                        <Button fx:id="textButton" text="A" />
+                        <Spinner fx:id="fontSizeSpinner" />
                     </HBox>
                     <Label text="Forme" style="-fx-font-size: 10;" />
                 </VBox>
