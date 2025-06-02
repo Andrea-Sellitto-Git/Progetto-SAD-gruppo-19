@@ -75,23 +75,7 @@ public abstract class ShapeDecorator implements Shape{
     }
 
     @Override
-    public Shape clone() {
-        return recreateWith(decorated.clone()); // ricrea la struttura clonando in profondità
-    }
-
-
-    private Shape recreateChainWith(AbstractShape baseClone) {
-        if (decorated instanceof ShapeDecorator) {
-            ShapeDecorator innerDecorator = (ShapeDecorator) decorated;
-            // Ricorsione: ricrea decorator più interni attorno alla forma base clonata
-            Shape innerClone = innerDecorator.recreateChainWith(baseClone);
-            // Ricrea questo decorator attorno al clone interno
-            return recreateWith(innerClone);
-        } else {
-            // Decorator base è la forma concreta (già clonata)
-            return baseClone;
-        }
-    }
+    public abstract Shape clone();
 
     @Override
     public double getRotation() {
@@ -102,9 +86,7 @@ public abstract class ShapeDecorator implements Shape{
     public void setRotation(double degrees) {
         decorated.setRotation(degrees);
     }    
-    
-    protected abstract Shape recreateWith(Shape newInner);
-    
+        
     private AbstractShape unwrapToAbstract(Shape shape) {
         while (shape instanceof ShapeDecorator) {
             shape = ((ShapeDecorator) shape).decorated;

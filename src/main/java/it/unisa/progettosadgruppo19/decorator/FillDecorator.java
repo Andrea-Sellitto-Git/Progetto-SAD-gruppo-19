@@ -25,9 +25,8 @@ public class FillDecorator extends ShapeDecorator implements Serializable{
     }
     
     @Override
-    protected Shape recreateWith(Shape newInner) {
-        return new FillDecorator(newInner, fill);
+    public Shape clone() {      
+        return new FillDecorator(decorated.clone(), (Color) ((javafx.scene.shape.Shape) decorated.getNode()).getFill()  );
     }
-
 
 }
