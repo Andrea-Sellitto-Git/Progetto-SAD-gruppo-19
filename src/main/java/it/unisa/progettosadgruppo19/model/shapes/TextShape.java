@@ -57,6 +57,7 @@ public class TextShape extends AbstractShape {
         TextShape cloned = new TextShape(textNode.getText(), textNode.getX(), textNode.getY());
         cloned.setFontSize(this.getFontSize());     // Copia dimensione font
         cloned.setColor((Color) textNode.getFill()); // Copia colore
+        cloned.setRotation(getRotation());
         return cloned;
     }
 

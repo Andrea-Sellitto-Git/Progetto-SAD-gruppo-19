@@ -85,6 +85,7 @@ public class RectangleShape extends AbstractShape {
         clone.r.setFill(r.getFill());
         clone.r.setTranslateX(r.getTranslateX());
         clone.r.setTranslateY(r.getTranslateY());
+        clone.setRotation(getRotation());
         return clone;
     }
     

@@ -111,6 +111,7 @@ public class EllipseShape extends AbstractShape implements Shape {
         newEllipse.setTranslateY(ell.getTranslateY());
         newEllipse.setStrokeWidth(ell.getStrokeWidth());
         newEllipse.getStrokeDashArray().setAll(ell.getStrokeDashArray());
+        newEllipse.setRotate(ell.getRotate());
 
         return new EllipseShape(this.startX, this.startY, newEllipse, (Color) ell.getStroke());
     }

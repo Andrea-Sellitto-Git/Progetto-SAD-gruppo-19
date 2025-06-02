@@ -99,6 +99,7 @@ public class LineShape extends AbstractShape{
         clone.line.setFill(l.getFill());
         clone.line.setTranslateX(l.getTranslateX());
         clone.line.setTranslateY(l.getTranslateY());
+        clone.setRotation(getRotation());
         return clone;
     }
     
