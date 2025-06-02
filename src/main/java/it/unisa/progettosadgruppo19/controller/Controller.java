@@ -34,6 +34,9 @@ public class Controller {
     @FXML
     private ColorPicker strokePicker, fillPicker;
 
+    @FXML
+    private Slider rotateSlider;
+    
     private final List<AbstractShape> currentShapes = new ArrayList<>();
     private MouseEventHandler mouseHandler;
     private ShapeManager shapeManager;
@@ -154,12 +157,38 @@ public class Controller {
             scaleTransform.setX(s);
             scaleTransform.setY(s);
         });
+    
+        
+        rotateSlider.valueProperty().addListener((obs, oldValue, newValue) -> {
+            if ( !rotateSlider.isValueChanging()) {
+                rotateSelected(Math.floor(newValue.doubleValue()));
+            }
+        });
+        rotateSlider.valueChangingProperty().addListener((obs, wasChanging, isNowChanging) -> {
+            if (!isNowChanging && wasChanging ) {
+                rotateSelected(Math.floor(rotateSlider.getValue()));
+            }
+        });
 
         drawingPane.setOnMousePressed(mouseHandler::onPressed);
         drawingPane.setOnMouseDragged(mouseHandler::onDragged);
         drawingPane.setOnMouseReleased(mouseHandler::onReleased);
         drawingPane.setOnMouseClicked(mouseHandler::onMouseClick);
     }
+    
+    private void rotateSelected(double value){
+        Shape shape = mouseHandler.getSelectedShapeInstance();
+        
+        System.out.print("cambio rotazione a "+ value+ "°");
+        
+        if (shape != null){
+            System.out.println(".");
+            commandInvoker.execute(new Rotate(shapeManager, shape , value));
+        }else{
+            System.out.println(",ma nessua figura è selezionata");
+        }
+    }
+    
 
     /**
      * Seleziona il tipo di shape da creare.

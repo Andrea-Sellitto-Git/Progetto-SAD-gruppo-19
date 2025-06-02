@@ -49,6 +49,7 @@ public class ShapeAdapter implements Serializable {
                 shape.getY(),
                 shape.getWidth(),
                 shape.getHeight(),
+                shape.getRotation(),
                 strokeColor,
                 fillColor
         );

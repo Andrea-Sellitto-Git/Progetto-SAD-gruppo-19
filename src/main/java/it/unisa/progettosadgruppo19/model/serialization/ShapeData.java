@@ -13,17 +13,19 @@ public class ShapeData implements Serializable {
     private double x, y, width, height;
     private double strokeR, strokeG, strokeB, strokeA;
     private double fillR, fillG, fillB, fillA;
+    private double rotation;
 
     /**
      * Costruisce un DTO a partire dai parametri forniti.
      */
-    public ShapeData(String type, double x, double y, double width, double height, Color stroke, Color fill) {
+    public ShapeData(String type, double x, double y, double width, double height, double rotation, Color stroke, Color fill) {
         this.type = type;
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-
+        this.rotation = rotation;
+        
         this.strokeR = stroke.getRed();
         this.strokeG = stroke.getGreen();
         this.strokeB = stroke.getBlue();
@@ -70,6 +72,13 @@ public class ShapeData implements Serializable {
         return height;
     }
 
+    /**
+     * Restituisce la rotazione.
+     */
+    public double getRotation(){
+        return rotation;
+    }
+    
     /**
      * Restituisce il colore di stroke ricostruito.
      */

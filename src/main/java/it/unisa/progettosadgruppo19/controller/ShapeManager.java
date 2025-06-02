@@ -110,4 +110,8 @@ public class ShapeManager implements ShapeManagerReceiver, ZOrderReceiver {
         }
     }
 
+    @Override
+    public void rotateShape(Shape shape,double degrees){
+        shape.setRotation(degrees);
+    }
 }

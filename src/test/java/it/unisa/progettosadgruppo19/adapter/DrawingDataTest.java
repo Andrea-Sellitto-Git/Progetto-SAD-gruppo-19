@@ -17,7 +17,7 @@ public class DrawingDataTest {
         // Crea una ShapeData con stroke e fill
         ShapeData s = new ShapeData(
                 "RectangleShape",
-                5, 5, 15, 15,
+                5, 5, 15, 15, 10,
                 Color.BLACK,
                 Color.YELLOW
         );
@@ -44,5 +44,6 @@ public class DrawingDataTest {
         assertEquals(15, restoredShape.getHeight());
         assertEquals(Color.BLACK, restoredShape.getStroke());
         assertEquals(Color.YELLOW, restoredShape.getFill());
+        assertEquals(10,restoredShape.getRotation() );
     }
 }

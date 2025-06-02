@@ -115,5 +115,13 @@ public class EllipseShape extends AbstractShape implements Shape {
         return new EllipseShape(this.startX, this.startY, newEllipse, (Color) ell.getStroke());
     }
 
-
+    @Override
+    public double getRotation() {
+        return getNode().getRotate();
+    }
+    
+    @Override
+    public void setRotation(double degrees) {
+        getNode().setRotate(degrees);
+    }
 }

@@ -82,11 +82,12 @@ public class ShapeFileManager {
 
             baseShape.onDrag(data.getX() + data.getWidth(), data.getY() + data.getHeight());
             baseShape.onRelease();
-
+            baseShape.setRotation( data.getRotation() );
+            
             Shape decorated = new StrokeDecorator(baseShape, data.getStroke());
             decorated = new FillDecorator(decorated, data.getFill());
             decorated.getNode().setUserData(decorated);
-
+            
             shapes.add(baseShape);
         }
 

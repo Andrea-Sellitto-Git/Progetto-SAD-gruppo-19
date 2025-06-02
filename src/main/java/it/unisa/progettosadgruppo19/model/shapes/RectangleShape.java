@@ -87,5 +87,14 @@ public class RectangleShape extends AbstractShape {
         clone.r.setTranslateY(r.getTranslateY());
         return clone;
     }
-
+    
+    @Override
+    public double getRotation() {
+        return getNode().getRotate();
+    }
+    
+    @Override
+    public void setRotation(double degrees) {
+        getNode().setRotate(degrees);
+    }
 }

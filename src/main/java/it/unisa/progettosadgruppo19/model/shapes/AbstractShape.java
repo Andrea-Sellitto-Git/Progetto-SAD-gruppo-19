@@ -90,6 +90,10 @@ public abstract class AbstractShape implements Shape {
      */
     public abstract double getHeight();
     
+    public abstract double getRotation();
+
+    public abstract void setRotation(double degrees);
+
     
     @Override
     public abstract AbstractShape clone(); // Sarà implementato dalle sottoclassi

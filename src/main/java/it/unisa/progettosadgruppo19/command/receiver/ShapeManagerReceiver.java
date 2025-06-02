@@ -39,4 +39,6 @@ public interface ShapeManagerReceiver {
      * @param index la posizione (zero-based) in cui inserirla
      */
     void insertShapeAt(Shape shape, int index);
+        
+    void rotateShape(Shape shape,double degrees);
 }

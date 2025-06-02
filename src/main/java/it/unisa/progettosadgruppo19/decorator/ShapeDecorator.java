@@ -93,7 +93,15 @@ public abstract class ShapeDecorator implements Shape{
         }
     }
 
-
+    @Override
+    public double getRotation() {
+        return decorated.getRotation();
+    }
+    
+    @Override
+    public void setRotation(double degrees) {
+        decorated.setRotation(degrees);
+    }    
     
     protected abstract Shape recreateWith(Shape newInner);
     

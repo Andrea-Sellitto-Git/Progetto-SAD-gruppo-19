@@ -101,5 +101,14 @@ public class LineShape extends AbstractShape{
         clone.line.setTranslateY(l.getTranslateY());
         return clone;
     }
-
+    
+    @Override
+    public double getRotation() {
+        return getNode().getRotate();
+    }
+    
+    @Override
+    public void setRotation(double degrees) {
+        getNode().setRotate(degrees);
+    }
 }

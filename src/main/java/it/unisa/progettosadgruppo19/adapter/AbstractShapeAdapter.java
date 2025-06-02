@@ -58,6 +58,7 @@ public abstract class AbstractShapeAdapter implements ShapeDataAdapter {
                 shape.getY(),
                 shape.getWidth(),
                 shape.getHeight(),
+                shape.getRotation(),
                 strokeColor,
                 fillColor
         );

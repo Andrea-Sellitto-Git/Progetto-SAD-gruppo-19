@@ -43,7 +43,8 @@ public interface Shape {
     void   setY(double x);
     double getWidth();
     double getHeight();
-
+    double getRotation();
+    void   setRotation(double degrees);
     Shape clone();
     
 }
