@@ -51,9 +51,13 @@ public class MouseEventHandler implements ClipboardReceiver {
     private double resizeAnchorX, resizeAnchorY;
     private double startMouseX, startMouseY;
     private double lastMouseX, lastMouseY;
+    private double fontSize = 12;  // valore di default
+
 
     private static final double HANDLE_RADIUS = 6.0;
     private static final double ELLIPSE_BORDER_TOLERANCE = 6.0;
+    
+    
 
     private Shape shapeToPaste;
     private Shape clipboardBuffer;
@@ -62,6 +66,11 @@ public class MouseEventHandler implements ClipboardReceiver {
     private double pressX, pressY;
 
     private StackUndoInvoker invoker;
+    
+    public void setFontSize(double fontSize) {
+        this.fontSize = fontSize;
+    }
+
 
     public enum ResizeMode {
         NONE,
@@ -308,7 +317,9 @@ public class MouseEventHandler implements ClipboardReceiver {
                 System.out.println("Testo vuoto, shape testo non creata.");
                 return;
             }
-            baseShape = (AbstractShape) creator.createShape(text, x, y, strokeColor);
+            double fontSize = 12;
+            
+            baseShape = (AbstractShape) creator.createShape(text, x, y, strokeColor, fontSize);
         } else {
             // Per rettangoli, ellissi, linee, crea la shape con coordinate iniziali
             baseShape = (AbstractShape) creator.createShape(x, y, strokeColor);
@@ -344,6 +355,7 @@ public class MouseEventHandler implements ClipboardReceiver {
 
         if (!isDragging) {
             isDragging = true;
+            
         }
 
         // Resize attivo

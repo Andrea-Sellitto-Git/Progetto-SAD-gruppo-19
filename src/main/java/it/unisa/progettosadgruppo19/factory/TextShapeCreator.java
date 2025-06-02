@@ -10,17 +10,21 @@ import javafx.scene.paint.Color;
 
 public class TextShapeCreator extends ShapeCreator {
 
+    public TextShapeCreator() {
+        // costruttore vuoto
+    }
+
     public Shape createShape(String text, double x, double y, Color stroke, double fontSize) {
         TextShape shape = new TextShape(text, x, y);
-        shape.setColor(stroke);  
+        shape.setColor(stroke);
         shape.setFontSize(fontSize);
         return shape;
     }
 
-
     @Override
     public Shape createShape(double x, double y, Color stroke) {
-        throw new UnsupportedOperationException("Use createShape(String, double, double, Color) for TextShape.");
+        throw new UnsupportedOperationException("Use createShape(String, double, double, Color, double) for TextShape.");
     }
 }
+
 

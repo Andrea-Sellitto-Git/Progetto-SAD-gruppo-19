@@ -14,18 +14,27 @@ public class ShapeData implements Serializable {
     private double strokeR, strokeG, strokeB, strokeA;
     private double fillR, fillG, fillB, fillA;
     private double rotation;
+    private String text;
+    private double fontSize;
+    
+    /**
+     * Costruttore base per shape senza testo.
+     */
+    public ShapeData(String type, double x, double y, double width, double height, double rotation, Color stroke, Color fill) {
+        this(type, x, y, width, height, rotation, stroke, fill, null, 0);
+    }
 
     /**
      * Costruisce un DTO a partire dai parametri forniti.
      */
-    public ShapeData(String type, double x, double y, double width, double height, double rotation, Color stroke, Color fill) {
+    public ShapeData(String type, double x, double y, double width, double height, double rotation, Color stroke, Color fill, String text, double fontSize) {
         this.type = type;
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.rotation = rotation;
-        
+
         this.strokeR = stroke.getRed();
         this.strokeG = stroke.getGreen();
         this.strokeB = stroke.getBlue();
@@ -35,6 +44,9 @@ public class ShapeData implements Serializable {
         this.fillG = fill.getGreen();
         this.fillB = fill.getBlue();
         this.fillA = fill.getOpacity();
+        
+        this.text = text;
+        this.fontSize = fontSize;
     }
 
     /**
@@ -75,10 +87,10 @@ public class ShapeData implements Serializable {
     /**
      * Restituisce la rotazione.
      */
-    public double getRotation(){
+    public double getRotation() {
         return rotation;
     }
-    
+
     /**
      * Restituisce il colore di stroke ricostruito.
      */
@@ -91,6 +103,14 @@ public class ShapeData implements Serializable {
      */
     public Color getFill() {
         return new Color(fillR, fillG, fillB, fillA);
+    }
+    
+    public String getText() {
+        return text;
+    }
+
+    public double getFontSize() {
+        return fontSize;
     }
 
     @Override

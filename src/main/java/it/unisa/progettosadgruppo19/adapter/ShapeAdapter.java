@@ -2,10 +2,12 @@ package it.unisa.progettosadgruppo19.adapter;
 
 import it.unisa.progettosadgruppo19.model.serialization.ShapeData;
 import it.unisa.progettosadgruppo19.model.shapes.AbstractShape;
+import it.unisa.progettosadgruppo19.model.shapes.TextShape;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
 import java.io.Serializable;
+import javafx.scene.text.Text;
 
 /**
  * Adapter che converte da AbstractShape a ShapeData per la persistenza.
@@ -42,6 +44,23 @@ public class ShapeAdapter implements Serializable {
 
         Color strokeColor = (stroke instanceof Color c) ? c : Color.BLACK;
         Color fillColor = (fill instanceof Color c) ? c : Color.TRANSPARENT;
+
+        // Aggiunta gestione per TextShape
+        if (shape instanceof TextShape textShape) {
+            Text textNode = (Text) textShape.getNode();
+            return new ShapeData(
+                    type,
+                    shape.getX(),
+                    shape.getY(),
+                    shape.getWidth(),
+                    shape.getHeight(),
+                    shape.getRotation(),
+                    strokeColor,
+                    fillColor,
+                    textShape.getText(),
+                    textShape.getFontSize()
+            );
+        }
 
         return new ShapeData(
                 type,
