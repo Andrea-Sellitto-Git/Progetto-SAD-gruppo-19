@@ -30,6 +30,8 @@ import java.util.ArrayList;
  * ridimensionare, decorare e incollare le Shape. Include supporto completo
  * per i poligoni con movimento e ridimensionamento.
  * Utilizza GeometryUtils per operazioni geometriche.
+ * 
+ * VERSIONE AGGIORNATA con supporto per selezione multipla.
  */
 public class MouseEventHandler implements ClipboardReceiver {
 
@@ -74,6 +76,11 @@ public class MouseEventHandler implements ClipboardReceiver {
 
     private StackUndoInvoker invoker;
     
+    // NUOVI CAMPI PER SELEZIONE MULTIPLA
+    private MultipleSelectionManager multipleSelectionManager;
+    private boolean isDraggingSelection = false;
+    private double selectionDragStartX, selectionDragStartY;
+    
     public void setFontSize(double fontSize) {
         this.fontSize = fontSize;
     }
@@ -94,6 +101,11 @@ public class MouseEventHandler implements ClipboardReceiver {
         this.drawingPane = drawingPane;
         this.currentShapes = currentShapes;
         this.shapeToPaste = null;
+    }
+
+    // NUOVO SETTER PER SELEZIONE MULTIPLA
+    public void setMultipleSelectionManager(MultipleSelectionManager manager) {
+        this.multipleSelectionManager = manager;
     }
 
     public void setToolbarHeight(double toolbarHeight) {
@@ -147,8 +159,135 @@ public class MouseEventHandler implements ClipboardReceiver {
     }
 
     /**
-     * Evento mouse pressed: gestisce l'inizio di creazione, selezione,
-     * spostamento o ridimensionamento inclusi i poligoni.
+     * Trova la shape più in alto (ultimo nell'ordine Z) al punto specificato.
+     */
+    private Shape findShapeAtPoint(double x, double y) {
+        // Cerca dall'ultimo al primo (ordine Z inverso) per trovare la shape più in alto
+        for (int i = drawingPane.getChildren().size() - 1; i >= 0; i--) {
+            Node node = drawingPane.getChildren().get(i);
+            
+            if (!(node instanceof javafx.scene.shape.Shape fxShape)) {
+                continue;
+            }
+
+            boolean isHit = false;
+            String nodeType = fxShape.getClass().getSimpleName();
+
+            if (fxShape instanceof Line line) {
+                double sx = line.getStartX(), sy = line.getStartY();
+                double ex = line.getEndX(), ey = line.getEndY();
+                isHit = GeometryUtils.isNearLine(x, y, sx, sy, ex, ey, HANDLE_RADIUS);
+            } else if (fxShape instanceof Polygon polygon) {
+                // Test migliorato per poligoni
+                isHit = polygon.contains(x, y);
+                if (!isHit) {
+                    isHit = GeometryUtils.isPointInPolygon(x, y, polygon.getPoints());
+                }
+                if (!isHit) {
+                    isHit = GeometryUtils.isNearPolygonBorder(x, y, polygon.getPoints(), 10.0);
+                }
+            } else {
+                isHit = fxShape.contains(x, y);
+            }
+
+            if (isHit) {
+                Object userData = fxShape.getUserData();
+                if (userData instanceof Shape shape) {
+                    System.out.println("[FIND SHAPE] Trovata: " + shape.getClass().getSimpleName());
+                    return shape;
+                }
+            }
+        }
+        
+        System.out.println("[FIND SHAPE] Nessuna shape trovata al punto (" + x + ", " + y + ")");
+        return null;
+    }
+
+    /**
+     * Rimuove tutti gli effetti visivi dalle shape.
+     */
+    private void clearAllVisualEffects() {
+        for (Node node : drawingPane.getChildren()) {
+            if (node instanceof javafx.scene.shape.Shape fxShape) {
+                fxShape.setStrokeWidth(1);
+                fxShape.setEffect(null);
+            }
+        }
+    }
+
+    /**
+     * Applica l'effetto visivo di selezione a una shape.
+     */
+    private void applySelectionEffect(Shape shape) {
+        try {
+            Node node = shape.getNode();
+            if (node instanceof javafx.scene.shape.Shape fxShape) {
+                DropShadow ds = new DropShadow();
+                ds.setRadius(10);
+                ds.setColor(Color.BLACK);
+                fxShape.setEffect(ds);
+            }
+        } catch (Exception e) {
+            System.err.println("[SELECTION EFFECT] Errore: " + e.getMessage());
+        }
+    }
+
+    /**
+     * METODO MODIFICATO - Evento mouse clicked con supporto selezione multipla.
+     */
+    public void onMouseClick(MouseEvent e) {
+        System.out.println("[CLICK] Click su (" + e.getX() + ", " + e.getY() + ")");
+        
+        // Gestione logica incolla (rimane invariata)
+        if (shapeToPaste != null) {
+            handlePaste(e.getX(), e.getY());
+            shapeToPaste = null;
+            return;
+        }
+
+        // Trova la shape cliccata
+        Shape clickedShape = findShapeAtPoint(e.getX(), e.getY());
+        
+        // Gestione della selezione multipla
+        if (multipleSelectionManager != null && multipleSelectionManager.isMultipleSelectionMode()) {
+            if (clickedShape != null) {
+                // Toggle della selezione per la shape cliccata
+                multipleSelectionManager.toggleSelection(clickedShape);
+                System.out.println("[MULTI-SELECT] Toggle shape: " + clickedShape.getClass().getSimpleName());
+            } else {
+                // Click su area vuota: pulisce la selezione se non si tiene CTRL
+                if (!e.isControlDown()) {
+                    multipleSelectionManager.clearSelection();
+                    System.out.println("[MULTI-SELECT] Selezione pulita (click su area vuota)");
+                }
+            }
+            
+            // Non impostare selectedShapeInstance in modalità multi-selezione
+            selectedShapeInstance = null;
+            return;
+        }
+        
+        // Modalità di selezione singola (comportamento originale)
+        // Reset degli effetti visivi
+        clearAllVisualEffects();
+        
+        selectedShapeInstance = clickedShape;
+        
+        if (selectedShapeInstance != null) {
+            // Applica effetto visivo di selezione
+            applySelectionEffect(selectedShapeInstance);
+            System.out.println("[CLICK] ✅ SELEZIONATO: " + selectedShapeInstance.getClass().getSimpleName());
+        } else {
+            System.out.println("[CLICK] ❌ Nessuna shape selezionata");
+            if (toolActive) {
+                return;
+            }
+            toolActive = false;
+        }
+    }
+
+    /**
+     * METODO MODIFICATO - Evento mouse pressed con supporto selezione multipla.
      */
     public void onPressed(MouseEvent e) {
         double x = e.getX();
@@ -156,6 +295,23 @@ public class MouseEventHandler implements ClipboardReceiver {
         isDragging = false;
         pressX = x;
         pressY = y;
+
+        // NUOVO: Gestione trascinamento selezione multipla
+        if (multipleSelectionManager != null && multipleSelectionManager.hasSelection()) {
+            // Verifica se il click è su una delle shape selezionate
+            Shape clickedShape = findShapeAtPoint(x, y);
+            if (clickedShape != null && multipleSelectionManager.isSelected(clickedShape)) {
+                // Inizia il trascinamento di gruppo
+                isDraggingSelection = true;
+                selectionDragStartX = x;
+                selectionDragStartY = y;
+                System.out.println("[MULTI-DRAG] Inizio trascinamento gruppo da (" + x + ", " + y + ")");
+                return;
+            } else {
+                // Click su shape non selezionata o area vuota
+                isDraggingSelection = false;
+            }
+        }
 
         System.out.println("[PRESSED] Click su (" + x + ", " + y + ")");
         
@@ -331,8 +487,7 @@ public class MouseEventHandler implements ClipboardReceiver {
     }
 
     /**
-     * Evento mouse dragged: gestisce trascinamento e ridimensionamento
-     * inclusi i poligoni.
+     * METODO MODIFICATO - Evento mouse dragged con supporto selezione multipla.
      */
     public void onDragged(MouseEvent e) {
         double x = Math.min(Math.max(0, e.getX()), drawingPane.getWidth());
@@ -344,6 +499,42 @@ public class MouseEventHandler implements ClipboardReceiver {
         if (!isDragging) {
             isDragging = true;
             System.out.println("[DRAGGED] Iniziato trascinamento");
+        }
+
+        // NUOVO: Gestione trascinamento selezione multipla
+        if (isDraggingSelection && multipleSelectionManager != null && multipleSelectionManager.hasSelection()) {
+            double deltaX = x - selectionDragStartX;
+            double deltaY = y - selectionDragStartY;
+            
+            // Sposta tutte le shape selezionate
+            for (Shape shape : multipleSelectionManager.getSelectedShapes()) {
+                Node node = shape.getNode();
+                
+                if (node instanceof Line line) {
+                    line.setStartX(line.getStartX() + deltaX);
+                    line.setStartY(line.getStartY() + deltaY);
+                    line.setEndX(line.getEndX() + deltaX);
+                    line.setEndY(line.getEndY() + deltaY);
+                } else if (node instanceof Rectangle rect) {
+                    rect.setX(rect.getX() + deltaX);
+                    rect.setY(rect.getY() + deltaY);
+                } else if (node instanceof Ellipse ell) {
+                    ell.setCenterX(ell.getCenterX() + deltaX);
+                    ell.setCenterY(ell.getCenterY() + deltaY);
+                } else if (node instanceof javafx.scene.text.Text textNode) {
+                    textNode.setX(textNode.getX() + deltaX);
+                    textNode.setY(textNode.getY() + deltaY);
+                } else if (node instanceof Polygon && shape instanceof FreeFormPolygonShape polygonShape) {
+                    polygonShape.translate(deltaX, deltaY);
+                }
+            }
+            
+            // Aggiorna la posizione di riferimento
+            selectionDragStartX = x;
+            selectionDragStartY = y;
+            
+            System.out.println("[MULTI-DRAG] Spostamento gruppo: (" + deltaX + ", " + deltaY + ")");
+            return;
         }
 
         // Resize attivo
@@ -509,10 +700,31 @@ public class MouseEventHandler implements ClipboardReceiver {
     }
 
     /**
-     * Evento mouse released: completa le operazioni attive includendo
-     * i comandi undo per i poligoni.
+     * METODO MODIFICATO - Evento mouse released con supporto selezione multipla.
      */
     public void onReleased(MouseEvent e) {
+        // NUOVO: Gestione fine trascinamento selezione multipla
+        if (isDraggingSelection && multipleSelectionManager != null && multipleSelectionManager.hasSelection()) {
+            double totalDeltaX = e.getX() - pressX;
+            double totalDeltaY = e.getY() - pressY;
+            
+            if (Math.abs(totalDeltaX) > 1 || Math.abs(totalDeltaY) > 1) {
+                // Crea comando undo per il movimento di gruppo
+                List<Shape> movedShapes = multipleSelectionManager.getSelectedShapes();
+                MultiMoveCommand moveCommand = new MultiMoveCommand(movedShapes, totalDeltaX, totalDeltaY);
+                
+                if (invoker != null) {
+                    invoker.execute(moveCommand);
+                }
+                
+                System.out.println("[MULTI-DRAG END] Movimento gruppo completato: (" + totalDeltaX + ", " + totalDeltaY + ")");
+            }
+            
+            isDraggingSelection = false;
+            isDragging = false;
+            return;
+        }
+
         if (currentResizeMode != ResizeMode.NONE && selectedShapeInstance != null) {
             javafx.scene.shape.Shape fx = (javafx.scene.shape.Shape) selectedShapeInstance.getNode();
 
@@ -681,99 +893,6 @@ public class MouseEventHandler implements ClipboardReceiver {
         isDragging = false;
     }
 
-    public void onMouseClick(MouseEvent e) {
-        System.out.println("[CLICK] Click su (" + e.getX() + ", " + e.getY() + ")");
-        
-        // gestione logica incolla
-        if (shapeToPaste != null) {
-            handlePaste(e.getX(), e.getY());
-            shapeToPaste = null;
-            return;
-        }
-
-        // Reset degli effetti visivi
-        for (Node node : drawingPane.getChildren()) {
-            if (node instanceof javafx.scene.shape.Shape fxShape) {
-                fxShape.setStrokeWidth(1);
-                fxShape.setEffect(null);
-            }
-        }
-
-        selectedShapeInstance = null;
-        
-        // Cicla attraverso tutti i nodi per trovare quello cliccato
-        for (Node node : drawingPane.getChildren()) {
-            if (!(node instanceof javafx.scene.shape.Shape fxShape)) {
-                continue;
-            }
-
-            boolean isHit = false;
-            String nodeType = fxShape.getClass().getSimpleName();
-
-            if (fxShape instanceof Line line) {
-                double sx = line.getStartX(), sy = line.getStartY();
-                double ex = line.getEndX(), ey = line.getEndY();
-                isHit = GeometryUtils.isNearLine(e.getX(), e.getY(), sx, sy, ex, ey, HANDLE_RADIUS);
-                System.out.println("[CLICK] Test Line: " + isHit);
-            } else if (fxShape instanceof Polygon polygon) {
-                // Test migliorato per poligoni usando GeometryUtils
-                System.out.println("[CLICK] Poligono trovato con " + polygon.getPoints().size()/2 + " vertici");
-                
-                // Prova prima il contains standard
-                isHit = polygon.contains(e.getX(), e.getY());
-                System.out.println("[CLICK] Contains standard: " + isHit);
-                
-                // Se non funziona, usa GeometryUtils
-                if (!isHit) {
-                    isHit = GeometryUtils.isPointInPolygon(e.getX(), e.getY(), polygon.getPoints());
-                    System.out.println("[CLICK] Test GeometryUtils: " + isHit);
-                }
-                
-                // Se ancora non funziona, verifica se è vicino ai bordi
-                if (!isHit) {
-                    isHit = GeometryUtils.isNearPolygonBorder(e.getX(), e.getY(), polygon.getPoints(), 10.0);
-                    System.out.println("[CLICK] Test vicino ai bordi: " + isHit);
-                }
-                
-                Object userData = polygon.getUserData();
-                System.out.println("[CLICK] UserData: " + (userData != null ? userData.getClass().getSimpleName() : "null"));
-                
-            } else {
-                isHit = fxShape.contains(e.getX(), e.getY());
-                System.out.println("[CLICK] Test " + nodeType + ": " + isHit);
-            }
-
-            if (!isHit) {
-                continue;
-            }
-
-            Object userData = fxShape.getUserData();
-            if (userData instanceof Shape shape) {
-                selectedShapeInstance = shape;
-                
-                // Applica effetto visivo di selezione
-                DropShadow ds = new DropShadow();
-                ds.setRadius(10);
-                ds.setColor(Color.BLACK);
-                fxShape.setEffect(ds);
-                
-                System.out.println("[CLICK] ✅ SELEZIONATO: " + shape.getClass().getSimpleName());
-                break;
-            } else {
-                System.out.println("[CLICK] ❌ UserData non valido per " + nodeType + ": " + 
-                    (userData != null ? userData.getClass().getSimpleName() : "null"));
-            }
-        }
-        
-        if (selectedShapeInstance == null) {
-            System.out.println("[CLICK] ❌ Nessuna shape selezionata");
-            if (toolActive) {
-                return;
-            }
-            toolActive = false;
-        }
-    }
-
     public void setShapeToPaste(Shape shapeToPaste) {
         this.shapeToPaste = shapeToPaste;
     }
@@ -842,12 +961,20 @@ public class MouseEventHandler implements ClipboardReceiver {
         }
     }
 
+    /**
+     * METODO MODIFICATO - Deseleziona con supporto selezione multipla.
+     */
     public void unselectShape() {
-        if (selectedShapeInstance != null) {
-            javafx.scene.shape.Shape fx = (javafx.scene.shape.Shape) selectedShapeInstance.getNode();
-            fx.setStrokeWidth(1);
-            fx.setEffect(null);
-            selectedShapeInstance = null;
+        if (multipleSelectionManager != null && multipleSelectionManager.isMultipleSelectionMode()) {
+            multipleSelectionManager.clearSelection();
+        } else {
+            // Comportamento originale
+            if (selectedShapeInstance != null) {
+                javafx.scene.shape.Shape fx = (javafx.scene.shape.Shape) selectedShapeInstance.getNode();
+                fx.setStrokeWidth(1);
+                fx.setEffect(null);
+                selectedShapeInstance = null;
+            }
         }
     }
 

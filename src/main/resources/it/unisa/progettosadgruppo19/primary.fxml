@@ -17,6 +17,8 @@
                 <Button fx:id="saveButton" text="💾 Salva" />
                 <Button fx:id="loadButton" text="📂 Carica" />
                 <Separator orientation="VERTICAL" />
+                <Button fx:id="multiSelectButton" text="🔲 Multi-Select" 
+                        style="-fx-font-weight: bold;" />
                 <Button fx:id="bringToFrontButton" text="⬆ In Primo Piano" />
                 <Button fx:id="sendToBackButton" text="⬇ In Secondo Piano" />
                 <Button fx:id="gridButton" text="▦ Griglia" />
@@ -39,7 +41,16 @@
                 </VBox>
 
                 <Separator orientation="VERTICAL" />
-
+                
+                 <VBox alignment="CENTER">
+                    <HBox spacing="5">
+                        <Button fx:id="selectAllButton" text="⬜ Tutto" />
+                        <Button fx:id="clearSelectionButton" text="❌ Niente" />
+                        <Label fx:id="selectionCountLabel" text="0 sel." style="-fx-font-size: 10;" />
+                    </HBox>
+                    <Label text="Selezione" style="-fx-font-size: 10;" />
+                </VBox>
+                
                 <!-- Sezione Forme -->
                 <VBox alignment="CENTER">
                     <HBox spacing="5">
