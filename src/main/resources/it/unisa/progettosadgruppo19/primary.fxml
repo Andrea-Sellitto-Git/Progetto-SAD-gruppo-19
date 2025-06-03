@@ -21,6 +21,8 @@
                         style="-fx-font-weight: bold;" />
                 <Button fx:id="bringToFrontButton" text="⬆ In Primo Piano" />
                 <Button fx:id="sendToBackButton" text="⬇ In Secondo Piano" />
+                <Button fx:id="mirrorHorizontalButton" text="↔ Orizzontale" />
+                <Button fx:id="mirrorVerticalButton" text="↕ Verticale" />
                 <Button fx:id="gridButton" text="▦ Griglia" />
                 <Label text="Rotazione" />
                 <Slider fx:id="rotateSlider" blockIncrement="1.0" majorTickUnit="10.0" max="360.0" minorTickCount="1" showTickMarks="true" snapToTicks="true" />
@@ -59,7 +61,7 @@
                         <Button fx:id="ellipseButton" text="◯" />
                         <Button fx:id="polygonButton" text="Poligono" />
                         <Button fx:id="textButton" text="A" />
-                        <Spinner fx:id="fontSizeSpinner" />
+                        <Spinner fx:id="fontSizeSpinner" prefWidth="50"/>
                     </HBox>
                     <Label text="Forme" style="-fx-font-size: 10;" />
                 </VBox>

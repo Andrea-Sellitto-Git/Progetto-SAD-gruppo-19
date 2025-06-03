@@ -28,6 +28,12 @@ import javafx.scene.paint.Color;
  * VERSIONE AGGIORNATA con supporto per selezione multipla.
  */
 public class Controller {
+    
+    @FXML
+    private Button mirrorHorizontalButton;
+
+    @FXML
+    private Button mirrorVerticalButton;
 
     @FXML
     private Spinner<Integer> fontSizeSpinner;
@@ -222,6 +228,20 @@ public class Controller {
 
         // NUOVO: Imposta scorciatoie da tastiera
         setupKeyboardShortcuts();
+        
+        mirrorHorizontalButton.setOnAction(e -> {
+            Shape selected = mouseHandler.getSelectedShapeInstance();
+            if (selected != null) {
+                commandInvoker.execute(new Mirror(shapeManager, selected, true));
+            }
+        });
+
+        mirrorVerticalButton.setOnAction(e -> {
+            Shape selected = mouseHandler.getSelectedShapeInstance();
+            if (selected != null) {
+                commandInvoker.execute(new Mirror(shapeManager, selected, false));
+            }
+        });
     }
     
     /**

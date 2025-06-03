@@ -9,6 +9,7 @@ import it.unisa.progettosadgruppo19.model.shapes.Shape;
 import it.unisa.progettosadgruppo19.model.shapes.FreeFormPolygonShape;
 import it.unisa.progettosadgruppo19.command.*;
 import it.unisa.progettosadgruppo19.command.receiver.ClipboardReceiver;
+import it.unisa.progettosadgruppo19.model.shapes.TextShape;
 import it.unisa.progettosadgruppo19.strategy.*;
 import it.unisa.progettosadgruppo19.util.GeometryUtils;
 
@@ -24,6 +25,8 @@ import javafx.scene.shape.Polygon;
 
 import java.util.List;
 import java.util.ArrayList;
+import javafx.scene.control.TextField;
+import javafx.scene.text.Text;
 
 /**
  * Gestisce gli eventi mouse sul canvas per creare, selezionare, spostare,
@@ -231,12 +234,47 @@ public class MouseEventHandler implements ClipboardReceiver {
             System.err.println("[SELECTION EFFECT] Errore: " + e.getMessage());
         }
     }
+    
+    private void startTextEditing(TextShape textShape) {
+        TextField textField = new TextField(textShape.getText());
+
+        // Posiziona il TextField sopra il testo (aggiusta coordinate se serve)
+        double x = textShape.getX();
+        double y = textShape.getY() - textShape.getHeight();
+        textField.setLayoutX(x);
+        textField.setLayoutY(y);
+        textField.setPrefColumnCount(10);
+
+        drawingPane.getChildren().add(textField);
+        textField.requestFocus();
+
+        // Quando si conferma o perde focus, aggiorna il testo e rimuovi il TextField
+        textField.setOnAction(e -> finalizeTextEdit(textShape, textField));
+        textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal) {
+                finalizeTextEdit(textShape, textField);
+            }
+        });
+    }
+
+    private void finalizeTextEdit(TextShape textShape, TextField textField) {
+        String newText = textField.getText();
+        if (newText != null && !newText.trim().isEmpty()) {
+            ((Text) textShape.getNode()).setText(newText);
+        }
+        drawingPane.getChildren().remove(textField);
+    }
 
     /**
      * METODO MODIFICATO - Evento mouse clicked con supporto selezione multipla.
      */
     public void onMouseClick(MouseEvent e) {
         System.out.println("[CLICK] Click su (" + e.getX() + ", " + e.getY() + ")");
+        if (e.getClickCount() == 2 && selectedShapeInstance instanceof TextShape textShape) {
+            startTextEditing(textShape);
+            return;  // Esci dal metodo per evitare altre azioni
+        }
+        
         
         // Gestione logica incolla (rimane invariata)
         if (shapeToPaste != null) {
