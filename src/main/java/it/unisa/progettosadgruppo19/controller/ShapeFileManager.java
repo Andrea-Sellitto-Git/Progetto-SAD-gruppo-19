@@ -19,18 +19,34 @@ import java.util.stream.Collectors;
 /**
  * Gestisce il salvataggio e il caricamento delle shape su/da file binari.
  * Supporta tutte le forme geometriche inclusi i poligoni a forma libera.
+ * VERSIONE CORRETTA che elimina duplicazioni durante salvataggio e caricamento.
  */
 public class ShapeFileManager {
 
     /**
      * Serializza la lista di shape e la salva sul file specificato.
+     * VERSIONE CORRETTA che elimina duplicati durante il salvataggio.
      *
      * @param shapes lista di {@link AbstractShape} da salvare.
      * @param file file di destinazione; creato se inesistente.
      * @throws IOException in caso di errori di I/O.
      */
     public void saveToFile(List<AbstractShape> shapes, File file) throws IOException {
-        List<ShapeData> dataList = shapes.stream()
+        System.out.println("[SAVE DEBUG] Inizio salvataggio di " + shapes.size() + " shape");
+        
+        // DEBUG: Mostra tutte le shape che si stanno per salvare
+        for (int i = 0; i < shapes.size(); i++) {
+            AbstractShape shape = shapes.get(i);
+            System.out.println("[SAVE DEBUG] [" + i + "] " + shape.getClass().getSimpleName() + 
+                              " @ (" + shape.getX() + ", " + shape.getY() + ")");
+        }
+        
+        // CORREZIONE: Rimuovi duplicati basati su posizione e tipo
+        List<AbstractShape> uniqueShapes = removeDuplicateShapes(shapes);
+        
+        System.out.println("[SAVE DEBUG] Dopo rimozione duplicati: " + uniqueShapes.size() + " shape uniche");
+        
+        List<ShapeData> dataList = uniqueShapes.stream()
                 .map(shape -> new ShapeAdapter(shape).getShapeData())
                 .collect(Collectors.toList());
 
@@ -40,7 +56,78 @@ public class ShapeFileManager {
             out.writeObject(drawingData);
         }
         
-        System.out.println("[SAVE] Salvate " + shapes.size() + " forme nel file: " + file.getName());
+        System.out.println("[SAVE] Salvate " + uniqueShapes.size() + " forme uniche nel file: " + file.getName());
+    }
+
+    /**
+     * Rimuove le shape duplicate dalla lista basandosi su posizione, tipo e dimensioni.
+     * Due shape sono considerate duplicate se hanno stesso tipo, posizione e dimensioni.
+     */
+    private List<AbstractShape> removeDuplicateShapes(List<AbstractShape> shapes) {
+        List<AbstractShape> unique = new ArrayList<>();
+        
+        for (AbstractShape current : shapes) {
+            boolean isDuplicate = false;
+            
+            for (AbstractShape existing : unique) {
+                if (areShapesDuplicate(current, existing)) {
+                    isDuplicate = true;
+                    System.out.println("[SAVE DEBUG] Duplicato rimosso: " + current.getClass().getSimpleName() + 
+                                     " @ (" + current.getX() + ", " + current.getY() + ")");
+                    break;
+                }
+            }
+            
+            if (!isDuplicate) {
+                unique.add(current);
+            }
+        }
+        
+        return unique;
+    }
+
+    /**
+     * Verifica se due shape sono duplicate (stesso tipo, posizione e dimensioni).
+     */
+    private boolean areShapesDuplicate(AbstractShape shape1, AbstractShape shape2) {
+        // Stesso tipo
+        if (!shape1.getClass().equals(shape2.getClass())) {
+            return false;
+        }
+        
+        // Stessa posizione (con tolleranza per errori di floating point)
+        double tolerance = 0.001;
+        if (Math.abs(shape1.getX() - shape2.getX()) > tolerance || 
+            Math.abs(shape1.getY() - shape2.getY()) > tolerance) {
+            return false;
+        }
+        
+        // Stesse dimensioni
+        if (Math.abs(shape1.getWidth() - shape2.getWidth()) > tolerance || 
+            Math.abs(shape1.getHeight() - shape2.getHeight()) > tolerance) {
+            return false;
+        }
+        
+        // Stessa rotazione
+        if (Math.abs(shape1.getRotation() - shape2.getRotation()) > tolerance) {
+            return false;
+        }
+        
+        // Per i testi, verifica anche il contenuto
+        if (shape1 instanceof TextShape text1 && shape2 instanceof TextShape text2) {
+            if (!text1.getText().equals(text2.getText())) {
+                return false;
+            }
+        }
+        
+        // Per i poligoni, verifica i punti (controllo semplificato)
+        if (shape1 instanceof FreeFormPolygonShape poly1 && shape2 instanceof FreeFormPolygonShape poly2) {
+            if (poly1.getVertexCount() != poly2.getVertexCount()) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     /**
@@ -65,6 +152,8 @@ public class ShapeFileManager {
 
     /**
      * Ricostruisce le {@link AbstractShape} da un {@link DrawingData}.
+     * VERSIONE CORRETTA: Applica i colori direttamente al nodo JavaFX senza decorator
+     * per evitare duplicazioni durante il caricamento.
      *
      * @param drawingData dati serializzati del disegno.
      * @return lista di {@link AbstractShape} ricreate nel loro stato originale.
@@ -76,13 +165,27 @@ public class ShapeFileManager {
             try {
                 AbstractShape baseShape = createShapeFromData(data);
                 if (baseShape != null) {
-                    // Applica decoratori
-                    Shape decorated = new StrokeDecorator(baseShape, data.getStroke());
-                    decorated = new FillDecorator(decorated, data.getFill());
-                    decorated.getNode().setUserData(decorated);
+                    // CORREZIONE: Applica i colori direttamente al nodo JavaFX
+                    // senza usare i decorator per evitare duplicazioni
+                    try {
+                        javafx.scene.shape.Shape fxShape = (javafx.scene.shape.Shape) baseShape.getNode();
+                        fxShape.setStroke(data.getStroke());
+                        fxShape.setFill(data.getFill());
+                        
+                        // Imposta UserData per la selezione
+                        baseShape.getNode().setUserData(baseShape);
+                        
+                        System.out.println("[REBUILD] Ricostruita: " + data.getType() + 
+                                         " @ (" + data.getX() + ", " + data.getY() + ") " +
+                                         "con stroke=" + data.getStroke() + ", fill=" + data.getFill());
+                        
+                    } catch (ClassCastException e) {
+                        System.err.println("[REBUILD] Nodo non è una Shape JavaFX: " + baseShape.getNode().getClass());
+                        // Fallback: imposta solo UserData
+                        baseShape.getNode().setUserData(baseShape);
+                    }
 
                     shapes.add(baseShape);
-                    System.out.println("[REBUILD] Ricostruita: " + data.getType() + " @ (" + data.getX() + ", " + data.getY() + ")");
                 }
             } catch (Exception e) {
                 System.err.println("[REBUILD ERROR] Errore nella ricostruzione di " + data.getType() + ": " + e.getMessage());
@@ -204,5 +307,38 @@ public class ShapeFileManager {
         } catch (Exception e) {
             return "Errore nella lettura del file: " + e.getMessage();
         }
+    }
+    
+    /**
+     * METODO AGGIUNTIVO: Ricostruisce le shape con decorator applicati.
+     * Questo metodo può essere usato in futuro se serve applicare i decorator
+     * durante il caricamento per casi specifici.
+     * 
+     * @param drawingData dati serializzati del disegno
+     * @return lista di Shape decorate
+     */
+    public List<Shape> rebuildDecoratedShapes(DrawingData drawingData) {
+        List<Shape> decoratedShapes = new ArrayList<>();
+
+        for (ShapeData data : drawingData.getShapes()) {
+            try {
+                AbstractShape baseShape = createShapeFromData(data);
+                if (baseShape != null) {
+                    // Applica decoratori
+                    Shape decorated = new StrokeDecorator(baseShape, data.getStroke());
+                    decorated = new FillDecorator(decorated, data.getFill());
+                    decorated.getNode().setUserData(decorated);
+
+                    decoratedShapes.add(decorated);
+                    
+                    System.out.println("[REBUILD DECORATED] Ricostruita: " + data.getType() + " @ (" + data.getX() + ", " + data.getY() + ")");
+                }
+            } catch (Exception e) {
+                System.err.println("[REBUILD DECORATED ERROR] Errore nella ricostruzione di " + data.getType() + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        return decoratedShapes;
     }
 }

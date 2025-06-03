@@ -14,9 +14,7 @@ import java.util.List;
 
 /**
  * Comando per caricare un disegno da file binario (*.bin).
- * Mostra un {@link FileChooser}, utilizza {@link ShapeFileManager} per
- * leggere i dati e ricostruire le {@link AbstractShape}, poi le visualizza
- * su un {@link Pane}.
+ * VERSIONE CORRETTA che funziona con il nuovo sistema di salvataggio senza duplicati.
  */
 public class Load implements Command {
 
@@ -40,10 +38,10 @@ public class Load implements Command {
         this.fileManager = fileManager;
     }
 
-     /**
+    /**
      * Esegue il comando aprendo il FileChooser, caricando il file selezionato,
      * pulendo la lista e il pane, ricostruendo le shape e aggiungendole
-     * nuovamente all'interfaccia. Stampa in console i dettagli delle shape.
+     * nuovamente all'interfaccia. VERSIONE CORRETTA senza duplicazioni.
      */
     @Override
     public void execute() {
@@ -54,20 +52,37 @@ public class Load implements Command {
         File file = chooser.showOpenDialog(stage);
         if (file != null) {
             try {
+                System.out.println("\n=== LOAD START ===");
+                
+                // Carica i dati dal file
                 DrawingData data = fileManager.loadFromFile(file);
+                
+                // Ricostruisci le shape (ora senza duplicati grazie al salvataggio corretto)
                 List<AbstractShape> shapes = fileManager.rebuildShapes(data);
+                
+                // Pulisci il canvas corrente
+                System.out.println("[LOAD] Pulizia canvas...");
                 drawingPane.getChildren().clear();
                 currentShapes.clear();
+                
+                // Aggiungi le shape caricate
+                System.out.println("[LOAD] Aggiunta " + shapes.size() + " shape al canvas...");
                 for (AbstractShape s : shapes) {
                     currentShapes.add(s);
                     drawingPane.getChildren().add(s.getNode());
                 }
 
+                System.out.println("[LOAD] Caricamento completato: " + shapes.size() + " shape caricate");
+                
+                // Log delle shape caricate
                 for (ShapeData s : data.getShapes()) {
                     System.out.println("  " + s.getType() + " @ " + s.getX() + "," + s.getY());
                 }
+                
+                System.out.println("=== LOAD END ===\n");
 
             } catch (IOException | ClassNotFoundException e) {
+                System.err.println("[LOAD ERROR] Errore durante il caricamento: " + e.getMessage());
                 e.printStackTrace();
             }
         }
