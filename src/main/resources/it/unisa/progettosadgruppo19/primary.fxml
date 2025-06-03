@@ -11,7 +11,7 @@
 
             <!-- Barra comandi base -->
             <ToolBar fx:id="toolbar">
-               <Button fx:id="zoomOutButton" text="−" onAction="#onZoomOut"/>
+                <Button fx:id="zoomOutButton" text="−" onAction="#onZoomOut"/>
                 <Button fx:id="zoomInButton"  text="+" onAction="#onZoomIn"/>
                 <Button fx:id="undoButton" text="↶ Annulla" onAction="#onUndo" />
                 <Button fx:id="saveButton" text="💾 Salva" />
@@ -44,7 +44,7 @@
 
                 <Separator orientation="VERTICAL" />
                 
-                 <VBox alignment="CENTER">
+                <VBox alignment="CENTER">
                     <HBox spacing="5">
                         <Button fx:id="selectAllButton" text="⬜ Tutto" />
                         <Button fx:id="clearSelectionButton" text="❌ Niente" />
@@ -90,7 +90,12 @@
     </top>
 
     <center>
-        <Pane fx:id="drawingPane" style="-fx-background-color: white;" />
+        <ScrollPane fx:id="scrollPane" fitToWidth="false" fitToHeight="false">
+            <content>
+                <Pane fx:id="drawingPane" style="-fx-background-color: white;" prefWidth="2000" prefHeight="2000"/>
+            </content>
+        </ScrollPane>
     </center>
+
 
 </BorderPane>

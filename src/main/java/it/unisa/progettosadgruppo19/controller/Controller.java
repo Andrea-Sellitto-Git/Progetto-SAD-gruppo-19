@@ -24,11 +24,14 @@ import javafx.scene.paint.Color;
  * Controller principale per l'interfaccia di disegno. Gestisce la toolbar, il
  * canvas, i comandi di file (salva/carica), undo/redo e l'applicazione di
  * stroke, fill e zoom.
- * 
+ *
  * VERSIONE AGGIORNATA con supporto per selezione multipla.
  */
 public class Controller {
-    
+
+//    @FXML
+//    private ScrollPane scrollPane;
+
     @FXML
     private Button mirrorHorizontalButton;
 
@@ -57,13 +60,13 @@ public class Controller {
 
     @FXML
     private Slider rotateSlider;
-    
+
     // NUOVI CAMPI PER SELEZIONE MULTIPLA
     @FXML
     private Button multiSelectButton, selectAllButton, clearSelectionButton;
     @FXML
     private Label selectionCountLabel, selectionInfoLabel;
-    
+
     private final List<AbstractShape> currentShapes = new ArrayList<>();
     private MouseEventHandler mouseHandler;
     private PolygonMouseEventHandler polygonHandler;
@@ -81,8 +84,8 @@ public class Controller {
 
     /**
      * Inizializza il controller: collega i trasform, i listener dei bottoni,
-     * configura il mouse handler e imposta colori di default.
-     * VERSIONE AGGIORNATA con supporto selezione multipla.
+     * configura il mouse handler e imposta colori di default. VERSIONE
+     * AGGIORNATA con supporto selezione multipla.
      */
     @FXML
     public void initialize() {
@@ -99,16 +102,16 @@ public class Controller {
         mouseHandler.setSelectedShape(selectedShape);
         mouseHandler.setToolActive(true);
         mouseHandler.setInvoker(commandInvoker);
-        
+
         // NUOVO: Imposta il manager selezione multipla nel mouse handler
         mouseHandler.setMultipleSelectionManager(multipleSelectionManager);
-        
+
         Platform.runLater(() -> {
             mouseHandler.setToolbarHeight(toolbar.getHeight());
         });
 
         setNeutralTool();
-        
+
         strokePicker.setValue(javafx.scene.paint.Color.BLACK);
         fillPicker.setValue(javafx.scene.paint.Color.TRANSPARENT);
 
@@ -221,14 +224,14 @@ public class Controller {
 
         // NUOVO: Timer per aggiornare le informazioni di selezione
         javafx.animation.Timeline selectionUpdateTimer = new javafx.animation.Timeline(
-            new javafx.animation.KeyFrame(javafx.util.Duration.millis(500), e -> updateSelectionInfo())
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(500), e -> updateSelectionInfo())
         );
         selectionUpdateTimer.setCycleCount(javafx.animation.Timeline.INDEFINITE);
         selectionUpdateTimer.play();
 
         // NUOVO: Imposta scorciatoie da tastiera
         setupKeyboardShortcuts();
-        
+
         mirrorHorizontalButton.setOnAction(e -> {
             Shape selected = mouseHandler.getSelectedShapeInstance();
             if (selected != null) {
@@ -243,19 +246,19 @@ public class Controller {
             }
         });
     }
-    
+
     /**
      * MODIFICATO: Rotazione con supporto selezione multipla.
      */
     private void rotateSelection(double value) {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
-            
+
             System.out.println("[CONTROLLER] Rotazione selezione multipla a " + value + "°");
-            
+
             MultiRotateCommand command = new MultiRotateCommand(shapeManager, selectedShapes, value);
             commandInvoker.execute(command);
-            
+
             System.out.println("[CONTROLLER] Rotazione applicata a " + selectedShapes.size() + " shape");
         } else {
             // Comportamento normale per singola selezione
@@ -263,25 +266,24 @@ public class Controller {
         }
     }
 
-    private void rotateSelected(double value){
+    private void rotateSelected(double value) {
         Shape shape = mouseHandler.getSelectedShapeInstance();
-        
-        System.out.print("cambio rotazione a "+ value+ "°");
-        
-        if (shape != null){
+
+        System.out.print("cambio rotazione a " + value + "°");
+
+        if (shape != null) {
             System.out.println(".");
-            commandInvoker.execute(new Rotate(shapeManager, shape , value));
-        }else{
+            commandInvoker.execute(new Rotate(shapeManager, shape, value));
+        } else {
             System.out.println(",ma nessua figura è selezionata");
         }
     }
-    
+
     /**
-     * Attiva la modalità "neutra", cioè nessuno strumento di disegno selezionato:
-     *  – se c'era polygonHandler, lo stacca (detach e null)
-     *  – disabilita mouseHandler
-     *  – imposta selectedShape = null
-     *  – toglie stili CSS di evidenziazione dai pulsanti
+     * Attiva la modalità "neutra", cioè nessuno strumento di disegno
+     * selezionato: – se c'era polygonHandler, lo stacca (detach e null) –
+     * disabilita mouseHandler – imposta selectedShape = null – toglie stili CSS
+     * di evidenziazione dai pulsanti
      */
     private void setNeutralTool() {
         // Detach del polygon handler se presente
@@ -290,12 +292,12 @@ public class Controller {
             polygonHandler = null;
             System.out.println("[CONTROLLER] PolygonHandler detached.");
         }
-        
+
         // Disattiva il mouse handler standard
         if (mouseHandler != null) {
             mouseHandler.setToolActive(false);
         }
-        
+
         // Reset dello strumento selezionato
         selectedShape = null;
 
@@ -305,10 +307,10 @@ public class Controller {
         ellipseButton.getStyleClass().remove("active-tool");
         polygonButton.getStyleClass().remove("active-tool");
         textButton.getStyleClass().remove("active-tool");
-        
+
         // Ripristina il comportamento standard del mouse
         drawingPane.setOnMouseClicked(mouseHandler::onMouseClick);
-        
+
         System.out.println("[CONTROLLER] Modalità neutra attivata");
     }
 
@@ -319,9 +321,9 @@ public class Controller {
      * ecc.)
      */
     private void setTool(String tipo) {
-        
+
         setNeutralTool();
-        
+
         if (tipo == null) {
             // Modalità neutra esplicita
             return;
@@ -337,18 +339,18 @@ public class Controller {
                     drawingPane,
                     // Faccio un cast: nella lista currentShapes ci possono essere anche altri AbstractShape,
                     // ma il costruttore di PolygonMouseEventHandler considera solo FreeFormPolygonShape.
-                    (List<FreeFormPolygonShape>)(List<?>) currentShapes,
+                    (List<FreeFormPolygonShape>) (List<?>) currentShapes,
                     new ShapeManager(currentShapes, drawingPane),
                     strokePicker.getValue(),
                     fillPicker.getValue(),
                     this::setNeutralTool // Callback per tornare automaticamente in modalità neutra
             );
-            
+
             // Evidenzia il pulsante attivo
             polygonButton.getStyleClass().add("active-tool");
-            
+
             System.out.println("[CONTROLLER] Tool Poligono attivato.");
-            
+
         } else {
             selectedShape = tipo;
             mouseHandler.setSelectedShape(tipo);
@@ -356,13 +358,17 @@ public class Controller {
             mouseHandler.setFillColor(fillPicker.getValue());
             mouseHandler.setToolActive(true);
             mouseHandler.unselectShape();
-            
+
             // Evidenzia il pulsante corrispondente
             switch (tipo) {
-                case "Linea" -> lineButton.getStyleClass().add("active-tool");
-                case "Rettangolo" -> rectButton.getStyleClass().add("active-tool");
-                case "Ellisse" -> ellipseButton.getStyleClass().add("active-tool");
-                case "Testo" -> textButton.getStyleClass().add("active-tool");
+                case "Linea" ->
+                    lineButton.getStyleClass().add("active-tool");
+                case "Rettangolo" ->
+                    rectButton.getStyleClass().add("active-tool");
+                case "Ellisse" ->
+                    ellipseButton.getStyleClass().add("active-tool");
+                case "Testo" ->
+                    textButton.getStyleClass().add("active-tool");
             }
         }
 
@@ -397,9 +403,9 @@ public class Controller {
     private void toggleMultipleSelectionMode() {
         boolean isActive = !multipleSelectionManager.isMultipleSelectionMode();
         multipleSelectionManager.setMultipleSelectionMode(isActive);
-        
+
         updateMultiSelectButtonAppearance();
-        
+
         System.out.println("[CONTROLLER] Modalità selezione multipla: " + (isActive ? "ATTIVATA" : "DISATTIVATA"));
     }
 
@@ -410,10 +416,10 @@ public class Controller {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
             Color newStroke = strokePicker.getValue();
-            
+
             MultiChangeStrokeCommand command = new MultiChangeStrokeCommand(selectedShapes, newStroke);
             mouseHandler.applyUndoableStrategy(command);
-            
+
             System.out.println("[CONTROLLER] Stroke applicato a " + selectedShapes.size() + " shape");
         } else {
             // Comportamento normale per singola selezione
@@ -428,10 +434,10 @@ public class Controller {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
             Color newFill = fillPicker.getValue();
-            
+
             MultiChangeFillCommand command = new MultiChangeFillCommand(selectedShapes, newFill);
             mouseHandler.applyUndoableStrategy(command);
-            
+
             System.out.println("[CONTROLLER] Fill applicato a " + selectedShapes.size() + " shape");
         } else {
             // Comportamento normale per singola selezione
@@ -440,7 +446,8 @@ public class Controller {
     }
 
     /**
-     * Applica il colore di contorno (stroke) alla shape selezionata (metodo originale).
+     * Applica il colore di contorno (stroke) alla shape selezionata (metodo
+     * originale).
      */
     private void applyStroke() {
         Shape selected = mouseHandler.getSelectedShapeInstance();
@@ -452,7 +459,8 @@ public class Controller {
     }
 
     /**
-     * Applica il colore di riempimento (fill) alla shape selezionata (metodo originale).
+     * Applica il colore di riempimento (fill) alla shape selezionata (metodo
+     * originale).
      */
     private void applyFill() {
         Shape selected = mouseHandler.getSelectedShapeInstance();
@@ -469,13 +477,13 @@ public class Controller {
     private void deleteSelection() {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
-            
+
             MultiDeleteCommand command = new MultiDeleteCommand(shapeManager, selectedShapes);
             commandInvoker.execute(command);
-            
+
             // Pulisce la selezione dopo l'eliminazione
             multipleSelectionManager.clearSelection();
-            
+
             System.out.println("[CONTROLLER] Eliminate " + selectedShapes.size() + " shape");
         } else {
             // Comportamento normale per singola selezione
@@ -493,10 +501,10 @@ public class Controller {
     private void copySelection() {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
-            
+
             MultiCopyCommand command = new MultiCopyCommand(mouseHandler, selectedShapes);
             commandInvoker.execute(command);
-            
+
             System.out.println("[CONTROLLER] Copiate " + selectedShapes.size() + " shape");
         } else {
             // Comportamento normale per singola selezione
@@ -513,16 +521,16 @@ public class Controller {
     private void cutSelection() {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
-            
+
             // Per ora, tagliamo solo la prima shape (limitazione del clipboard attuale)
             if (!selectedShapes.isEmpty()) {
                 Shape firstShape = selectedShapes.get(0);
                 commandInvoker.execute(new Cut(mouseHandler, shapeManager, firstShape));
-                
+
                 // Rimuovi le altre dalla selezione
                 multipleSelectionManager.removeFromSelection(firstShape);
             }
-            
+
             System.out.println("[CONTROLLER] Tagliata prima shape della selezione");
         } else {
             // Comportamento normale per singola selezione
@@ -541,11 +549,11 @@ public class Controller {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
             int maxIndex = drawingPane.getChildren().size() - 1;
-            
+
             for (Shape shape : selectedShapes) {
                 commandInvoker.execute(new ZLevelsToFront(shapeManager, shape, maxIndex));
             }
-            
+
             System.out.println("[CONTROLLER] Portate in primo piano " + selectedShapes.size() + " shape");
         } else {
             // Comportamento normale per singola selezione
@@ -565,11 +573,11 @@ public class Controller {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
             int gridCount = gridManager.getGridLayerCount();
-            
+
             for (Shape shape : selectedShapes) {
                 commandInvoker.execute(new ZLevelsToBack(shapeManager, shape, gridCount));
             }
-            
+
             System.out.println("[CONTROLLER] Portate in secondo piano " + selectedShapes.size() + " shape");
         } else {
             // Comportamento normale per singola selezione
@@ -589,7 +597,7 @@ public class Controller {
         if (multipleSelectionManager.isMultipleSelectionMode()) {
             List<AbstractShape> allShapes = new ArrayList<>(currentShapes);
             multipleSelectionManager.selectAll(allShapes);
-            
+
             System.out.println("[CONTROLLER] Selezionate tutte le shape: " + allShapes.size());
         }
     }
@@ -609,10 +617,10 @@ public class Controller {
     public void moveSelection(double deltaX, double deltaY) {
         if (multipleSelectionManager.hasSelection()) {
             List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
-            
+
             MultiMoveCommand command = new MultiMoveCommand(selectedShapes, deltaX, deltaY);
             mouseHandler.applyUndoableStrategy(command);
-            
+
             System.out.println("[CONTROLLER] Spostate " + selectedShapes.size() + " shape di (" + deltaX + ", " + deltaY + ")");
         }
     }
@@ -621,24 +629,26 @@ public class Controller {
      * NUOVO: Aggiorna le informazioni visualizzate sulla selezione corrente.
      */
     private void updateSelectionInfo() {
-        if (multipleSelectionManager == null) return;
-        
+        if (multipleSelectionManager == null) {
+            return;
+        }
+
         int count = multipleSelectionManager.getSelectionCount();
         boolean isMultiMode = multipleSelectionManager.isMultipleSelectionMode();
-        
+
         // Aggiorna label contatore
         if (selectionCountLabel != null) {
             if (isMultiMode) {
                 selectionCountLabel.setText(count + " sel.");
-                selectionCountLabel.setStyle("-fx-font-size: 10; -fx-text-fill: " + 
-                                           (count > 0 ? "blue" : "gray") + ";");
+                selectionCountLabel.setStyle("-fx-font-size: 10; -fx-text-fill: "
+                        + (count > 0 ? "blue" : "gray") + ";");
             } else {
                 Shape singleSelected = mouseHandler.getSelectedShapeInstance();
                 selectionCountLabel.setText(singleSelected != null ? "1 sel." : "0 sel.");
                 selectionCountLabel.setStyle("-fx-font-size: 10; -fx-text-fill: gray;");
             }
         }
-        
+
         // Aggiorna label informazioni
         if (selectionInfoLabel != null) {
             if (isMultiMode) {
@@ -660,12 +670,12 @@ public class Controller {
                 }
             }
         }
-        
+
         // Aggiorna stato pulsanti
         if (selectAllButton != null) {
             selectAllButton.setDisable(!isMultiMode || currentShapes.isEmpty());
         }
-        
+
         if (clearSelectionButton != null) {
             clearSelectionButton.setDisable(!isMultiMode || count == 0);
         }
@@ -700,7 +710,8 @@ public class Controller {
                         deleteSelection();
                         event.consume();
                     }
-                    default -> {}
+                    default -> {
+                    }
                 }
             } else if (event.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
                 // ESC: Esce dalla modalità multi-selezione
@@ -711,7 +722,7 @@ public class Controller {
                 }
             }
         });
-        
+
         // Assicura che il pane possa ricevere eventi tastiera
         drawingPane.setFocusTraversable(true);
     }
@@ -720,10 +731,12 @@ public class Controller {
      * NUOVO: Aggiorna l'aspetto del pulsante multi-selezione.
      */
     private void updateMultiSelectButtonAppearance() {
-        if (multiSelectButton == null) return;
-        
+        if (multiSelectButton == null) {
+            return;
+        }
+
         boolean isActive = multipleSelectionManager.isMultipleSelectionMode();
-        
+
         if (isActive) {
             multiSelectButton.setStyle("-fx-background-color: lightblue; -fx-text-fill: darkblue; -fx-font-weight: bold;");
             multiSelectButton.setText("🔲 Multi-Select ON");
@@ -749,37 +762,39 @@ public class Controller {
      * NUOVO: Mostra un menu contestuale per la selezione multipla.
      */
     private void showMultiSelectionContextMenu(double x, double y) {
-        if (!multipleSelectionManager.hasSelection()) return;
-        
+        if (!multipleSelectionManager.hasSelection()) {
+            return;
+        }
+
         ContextMenu contextMenu = new ContextMenu();
-        
+
         // Opzioni del menu
         MenuItem deleteItem = new MenuItem("Elimina selezione");
         deleteItem.setOnAction(e -> deleteSelection());
-        
+
         MenuItem copyItem = new MenuItem("Copia selezione");
         copyItem.setOnAction(e -> copySelection());
-        
+
         MenuItem toFrontItem = new MenuItem("Porta in primo piano");
         toFrontItem.setOnAction(e -> bringSelectionToFront());
-        
+
         MenuItem toBackItem = new MenuItem("Porta in secondo piano");
         toBackItem.setOnAction(e -> sendSelectionToBack());
-        
+
         SeparatorMenuItem separator = new SeparatorMenuItem();
-        
+
         MenuItem infoItem = new MenuItem("Info selezione");
         infoItem.setOnAction(e -> showSelectionDetails());
-        
+
         MenuItem duplicateItem = new MenuItem("Duplica selezione");
         duplicateItem.setOnAction(e -> duplicateSelection());
-        
+
         contextMenu.getItems().addAll(
-            deleteItem, copyItem, duplicateItem, separator, 
-            toFrontItem, toBackItem, separator, 
-            infoItem
+                deleteItem, copyItem, duplicateItem, separator,
+                toFrontItem, toBackItem, separator,
+                infoItem
         );
-        
+
         contextMenu.show(drawingPane, x, y);
     }
 
@@ -795,11 +810,11 @@ public class Controller {
                 mouseHandler.onMouseClick(event);
             }
         });
-        
+
         // Listener per aggiornamento stato controlli
         Platform.runLater(() -> {
             javafx.animation.Timeline controlsUpdateTimer = new javafx.animation.Timeline(
-                new javafx.animation.KeyFrame(javafx.util.Duration.millis(300), e -> updateControlsState())
+                    new javafx.animation.KeyFrame(javafx.util.Duration.millis(300), e -> updateControlsState())
             );
             controlsUpdateTimer.setCycleCount(javafx.animation.Timeline.INDEFINITE);
             controlsUpdateTimer.play();
@@ -813,14 +828,14 @@ public class Controller {
         boolean hasMultiSelection = multipleSelectionManager.hasSelection();
         boolean hasSingleSelection = mouseHandler.getSelectedShapeInstance() != null;
         boolean hasAnySelection = hasMultiSelection || hasSingleSelection;
-        
+
         // Abilita/disabilita controlli colore
         strokePicker.setDisable(!hasAnySelection);
         fillPicker.setDisable(!hasAnySelection);
-        
+
         // Abilita/disabilita slider rotazione
         rotateSlider.setDisable(!hasAnySelection);
-        
+
         // Abilita/disabilita pulsanti operazioni
         deleteButton.setDisable(!hasAnySelection);
         copyButton.setDisable(!hasAnySelection);
@@ -833,10 +848,12 @@ public class Controller {
      * NUOVO: Mostra i dettagli della selezione corrente.
      */
     private void showSelectionDetails() {
-        if (!multipleSelectionManager.hasSelection()) return;
-        
+        if (!multipleSelectionManager.hasSelection()) {
+            return;
+        }
+
         String details = getSelectionDebugInfo();
-        
+
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Dettagli Selezione");
         alert.setHeaderText("Informazioni sulla selezione corrente");
@@ -851,18 +868,18 @@ public class Controller {
         StringBuilder info = new StringBuilder();
         info.append("Modalità multi-selezione: ").append(multipleSelectionManager.isMultipleSelectionMode()).append("\n");
         info.append(multipleSelectionManager.getSelectionInfo()).append("\n");
-        
+
         if (multipleSelectionManager.hasSelection()) {
             double[] bbox = multipleSelectionManager.getSelectionBoundingBox();
             double[] center = multipleSelectionManager.getSelectionCenter();
             info.append("Bounding box: (").append(String.format("%.1f", bbox[0])).append(", ")
-                .append(String.format("%.1f", bbox[1])).append(") - (")
-                .append(String.format("%.1f", bbox[2])).append(", ")
-                .append(String.format("%.1f", bbox[3])).append(")\n");
+                    .append(String.format("%.1f", bbox[1])).append(") - (")
+                    .append(String.format("%.1f", bbox[2])).append(", ")
+                    .append(String.format("%.1f", bbox[3])).append(")\n");
             info.append("Centro selezione: (").append(String.format("%.1f", center[0]))
-                .append(", ").append(String.format("%.1f", center[1])).append(")");
+                    .append(", ").append(String.format("%.1f", center[1])).append(")");
         }
-        
+
         return info.toString();
     }
 
@@ -874,14 +891,14 @@ public class Controller {
             System.out.println("[DUPLICATE] Nessuna selezione da duplicare");
             return;
         }
-        
+
         List<Shape> selectedShapes = multipleSelectionManager.getSelectedShapes();
         List<AbstractShape> duplicatedShapes = new ArrayList<>();
-        
+
         // Offset per le copie
         double offsetX = 20;
         double offsetY = 20;
-        
+
         for (Shape shape : selectedShapes) {
             try {
                 Shape clonedShape = shape.clone();
@@ -889,25 +906,25 @@ public class Controller {
                     // Sposta la copia
                     clonedShape.setX(clonedShape.getX() + offsetX);
                     clonedShape.setY(clonedShape.getY() + offsetY);
-                    
+
                     // Aggiungi al canvas
                     AbstractShape abstractClone = AbstractShape.unwrapToAbstract(clonedShape);
                     currentShapes.add(abstractClone);
                     drawingPane.getChildren().add(clonedShape.getNode());
                     clonedShape.getNode().setUserData(clonedShape);
-                    
+
                     duplicatedShapes.add(abstractClone);
                 }
             } catch (Exception e) {
                 System.err.println("[DUPLICATE] Errore nella duplicazione: " + e.getMessage());
             }
         }
-        
+
         if (!duplicatedShapes.isEmpty()) {
             // Seleziona le nuove copie
             multipleSelectionManager.clearSelection();
             multipleSelectionManager.selectAll(duplicatedShapes);
-            
+
             System.out.println("[DUPLICATE] Duplicate " + duplicatedShapes.size() + " shape");
         }
     }
@@ -950,31 +967,31 @@ public class Controller {
      */
     private void enablePasteMode() {
         Shape clipboardShape = mouseHandler.getClipboard();
-        
+
         if (clipboardShape == null) {
             System.out.println("[PASTE MODE] Clipboard vuoto - nessuna operazione");
             return;
         }
-        
-        System.out.println("[PASTE MODE] Attivato: clicca sul canvas per incollare " + 
-                          clipboardShape.getClass().getSimpleName());
-        
+
+        System.out.println("[PASTE MODE] Attivato: clicca sul canvas per incollare "
+                + clipboardShape.getClass().getSimpleName());
+
         drawingPane.setOnMouseClicked(event -> {
             double clickX = event.getX();
             double clickY = event.getY();
-            
+
             System.out.println("[PASTE MODE] Click rilevato su: " + clickX + ", " + clickY);
-            
+
             // Esegui il comando paste migliorato
             commandInvoker.execute(new Paste(mouseHandler, shapeManager, clickX, clickY));
-            
+
             // Ripristina il comportamento normale del mouse
             setupMultiSelectionListeners();
-            
+
             System.out.println("[PASTE MODE] Modalità paste disattivata");
         });
     }
-    
+
     private void onCanvasClickForText(MouseEvent event) {
         textFinalized = false;
 
@@ -1017,7 +1034,7 @@ public class Controller {
             double y = textField.getLayoutY() + textField.getHeight() - 5;
 
             double fontSize = fontSizeSpinner.getValue();
-            
+
             TextShapeCreator factory = new TextShapeCreator();
             Shape shape = factory.createShape(
                     text, x, y,
