@@ -8,8 +8,8 @@ import javafx.scene.shape.Rectangle;
  */
 public class RectangleShape extends AbstractShape {
 
-    private final double startX, startY;
-    private final Rectangle r;
+    private double startX, startY;
+    private final Rectangle rectangleNode;
 
     /**
      * Costruisce un RectangleShape iniziale di dimensione nulla.
@@ -22,18 +22,17 @@ public class RectangleShape extends AbstractShape {
         super(new Rectangle(startX, startY, 0, 0));
         this.startX = startX;
         this.startY = startY;
-        this.r = (Rectangle) node;
-        r.setStroke(stroke);
+        this.rectangleNode = (Rectangle) node;
+        rectangleNode.setStroke(stroke);
     }
-    
+
     public RectangleShape(double x, double y, double width, double height) {
         super(new Rectangle(x, y, width, height));
         this.startX = x;  // puoi anche impostarli a 0 se non ti servono nel clone
         this.startY = y;
-        this.r = (Rectangle) node;
-        r.setStroke(Color.BLACK);  // o un colore di default
+        this.rectangleNode = (Rectangle) node;
+        rectangleNode.setStroke(Color.BLACK);  // o un colore di default
     }
-
 
     @Override
     public void onDrag(double x, double y) {
@@ -50,92 +49,69 @@ public class RectangleShape extends AbstractShape {
 
     @Override
     public double getX() {
-        return r.getX();
+        return rectangleNode.getX();
     }
 
     @Override
     public double getY() {
-        return r.getY();
-    }
-    
-    @Override
-    public void   setX(double x){
-        r.setX(x);
+        return rectangleNode.getY();
     }
 
     @Override
-    public void   setY(double y){
-        r.setY(y);
+    public void setX(double x) {
+        this.startX = x;  // aggiorna anche startX
+        rectangleNode.setX(x);
     }
+
+    @Override
+    public void setY(double y) {
+        double deltaY = y - getY();
+        startY = y;  // aggiorna il tuo campo interno
+        if (rectangleNode != null) {
+            rectangleNode.setY(rectangleNode.getY() + deltaY);  // sposta anche il nodo JavaFX
+        }
+    }
+
     @Override
     public double getWidth() {
-        return r.getWidth();
+        return rectangleNode.getWidth();
     }
 
     @Override
     public double getHeight() {
-        return r.getHeight();
+        return rectangleNode.getHeight();
     }
-    
+
+    public RectangleShape(Rectangle rectangle) {
+        super(rectangle);
+        this.rectangleNode = rectangle;
+        this.startX = rectangle.getX();
+        this.startY = rectangle.getY();
+    }
+
     @Override
     public AbstractShape clone() {
-    try {
-        javafx.scene.shape.Rectangle originalRect = (javafx.scene.shape.Rectangle) this.node;
-        
-        // Crea un nuovo rettangolo con le stesse dimensioni ma SENZA posizione
-        javafx.scene.shape.Rectangle newRect = new javafx.scene.shape.Rectangle(
-            originalRect.getWidth(), 
-            originalRect.getHeight()
+        Rectangle original = this.rectangleNode;
+        Rectangle newRect = new Rectangle(
+                original.getX(), original.getY(),
+                original.getWidth(), original.getHeight()
         );
-        
-        // Copia tutte le proprietà visive
-        newRect.setStroke(originalRect.getStroke());
-        newRect.setFill(originalRect.getFill());
-        newRect.setStrokeWidth(originalRect.getStrokeWidth());
-        newRect.getStrokeDashArray().setAll(originalRect.getStrokeDashArray());
-        newRect.setRotate(originalRect.getRotate());
-        newRect.setScaleX(originalRect.getScaleX());
-        newRect.setScaleY(originalRect.getScaleY());
-        
-        // Imposta la posizione iniziale uguale all'originale
-        newRect.setX(originalRect.getX());
-        newRect.setY(originalRect.getY());
-        
-        // Crea la nuova shape wrapper
-        RectangleShape clone = new RectangleShape(
-            originalRect.getX(), 
-            originalRect.getY(), 
-            originalRect.getWidth(), 
-            originalRect.getHeight()
-        );
-        
-        // Sostituisce il nodo con quello configurato
-        // Hack: accedi al campo protetto attraverso reflection o modifica l'architettura
-        try {
-            java.lang.reflect.Field nodeField = AbstractShape.class.getDeclaredField("node");
-            nodeField.setAccessible(true);
-            nodeField.set(clone, newRect);
-        } catch (Exception reflectionEx) {
-            System.err.println("[CLONE RECT] Impossibile accedere al campo node: " + reflectionEx.getMessage());
-        }
-        
-        System.out.println("[CLONE RECT] Creata copia indipendente @ (" + 
-                          newRect.getX() + ", " + newRect.getY() + ")");
-        
-        return clone;
-        
-    } catch (Exception e) {
-        System.err.println("[CLONE RECT ERROR] " + e.getMessage());
-        e.printStackTrace();
-        return null;
+        newRect.setStroke(original.getStroke());
+        newRect.setFill(original.getFill());
+        newRect.setStrokeWidth(original.getStrokeWidth());
+        newRect.getStrokeDashArray().setAll(original.getStrokeDashArray());
+        newRect.setRotate(original.getRotate());
+        newRect.setScaleX(original.getScaleX());
+        newRect.setScaleY(original.getScaleY());
+
+        return new RectangleShape(newRect);
     }
-}
-    
+
     @Override
     public double getRotation() {
         return getNode().getRotate();
     }
-    
+
     @Override
     public void setRotation(double degrees) {
         getNode().setRotate(degrees);

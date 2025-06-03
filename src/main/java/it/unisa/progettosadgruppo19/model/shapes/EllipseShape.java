@@ -8,15 +8,15 @@ import javafx.scene.shape.Ellipse;
  */
 public class EllipseShape extends AbstractShape implements Shape {
 
-    private final double startX, startY;
-    private final Ellipse e;
+    private double startX, startY;
+    private final Ellipse ellipseNode;
     
     private EllipseShape(double startX, double startY, Ellipse ellipse, Color stroke) {
         super(ellipse);
         this.startX = startX;
         this.startY = startY;
-        this.e = (Ellipse) node;
-        e.setStroke(stroke);
+        this.ellipseNode = (Ellipse) node;
+        ellipseNode.setStroke(stroke);
     }
 
 
@@ -31,8 +31,8 @@ public class EllipseShape extends AbstractShape implements Shape {
         super(new Ellipse(startX, startY, 0, 0));
         this.startX = startX;
         this.startY = startY;
-        this.e = (Ellipse) node;
-        e.setStroke(stroke);
+        this.ellipseNode = (Ellipse) node;
+        ellipseNode.setStroke(stroke);
     }
 
     /**
@@ -48,16 +48,28 @@ public class EllipseShape extends AbstractShape implements Shape {
         super(new Ellipse(centerX, centerY, radiusX, radiusY));
         this.startX = centerX;
         this.startY = centerY;
-        this.e = (Ellipse) node;
-        e.setStroke(stroke);
+        this.ellipseNode = (Ellipse) node;
+        ellipseNode.setStroke(stroke);
+    }
+    
+    /**
+     * Costruttore per il clone.
+     *
+     * @param ellipse ellisse già configurata
+     */
+    public EllipseShape(Ellipse ellipse) {
+        super(ellipse);
+        this.ellipseNode = ellipse;
+        this.startX = ellipse.getCenterX();
+        this.startY = ellipse.getCenterY();
     }
 
     @Override
     public void onDrag(double x, double y) {
-        e.setCenterX((startX + x) / 2);
-        e.setCenterY((startY + y) / 2);
-        e.setRadiusX(Math.abs(x - startX) / 2);
-        e.setRadiusY(Math.abs(y - startY) / 2);
+        ellipseNode.setCenterX((startX + x) / 2);
+        ellipseNode.setCenterY((startY + y) / 2);
+        ellipseNode.setRadiusX(Math.abs(x - startX) / 2);
+        ellipseNode.setRadiusY(Math.abs(y - startY) / 2);
     }
 
     @Override
@@ -66,85 +78,57 @@ public class EllipseShape extends AbstractShape implements Shape {
 
     @Override
     public double getX() {
-        return e.getCenterX() - e.getRadiusX();
+        return ellipseNode.getCenterX() - ellipseNode.getRadiusX();
     }
 
     @Override
     public double getY() {
-        return e.getCenterY() - e.getRadiusY();
+        return ellipseNode.getCenterY() - ellipseNode.getRadiusY();
     }
 
     @Override
     public void setX(double x) {
-        e.setCenterX(x + e.getRadiusX());
+        ellipseNode.setCenterX(x + ellipseNode.getRadiusX());
+        this.startX = ellipseNode.getCenterX();
     }
 
     @Override
     public void setY(double y) {
-        e.setCenterY(y + e.getRadiusY());
+        ellipseNode.setCenterY(y + ellipseNode.getRadiusY());
+        this.startY = ellipseNode.getCenterY();
     }    
 
     @Override
     public double getWidth() {
-        return e.getRadiusX() * 2;
+        return ellipseNode.getRadiusX() * 2;
     }
 
     @Override
     public double getHeight() {
-        return e.getRadiusY() * 2;
+        return ellipseNode.getRadiusY() * 2;
     }
 
     @Override
     public AbstractShape clone() {
-    try {
-        javafx.scene.shape.Ellipse originalEll = (javafx.scene.shape.Ellipse) this.node;
-
-        // Crea una nuova ellisse con le stesse proprietà geometriche
-        javafx.scene.shape.Ellipse newEllipse = new javafx.scene.shape.Ellipse(
-            originalEll.getCenterX(),
-            originalEll.getCenterY(),
-            originalEll.getRadiusX(),
-            originalEll.getRadiusY()
+        Ellipse original = this.ellipseNode;
+        Ellipse newEllipse = new Ellipse(
+                original.getCenterX(),
+                original.getCenterY(),
+                original.getRadiusX(),
+                original.getRadiusY()
         );
 
-        // Copia tutte le proprietà visive
-        newEllipse.setStroke(originalEll.getStroke());
-        newEllipse.setFill(originalEll.getFill());
-        newEllipse.setStrokeWidth(originalEll.getStrokeWidth());
-        newEllipse.getStrokeDashArray().setAll(originalEll.getStrokeDashArray());
-        newEllipse.setRotate(originalEll.getRotate());
-        newEllipse.setScaleX(originalEll.getScaleX());
-        newEllipse.setScaleY(originalEll.getScaleY());
+        // Copia proprietà visive
+        newEllipse.setStroke(original.getStroke());
+        newEllipse.setFill(original.getFill());
+        newEllipse.setStrokeWidth(original.getStrokeWidth());
+        newEllipse.getStrokeDashArray().setAll(original.getStrokeDashArray());
+        newEllipse.setRotate(original.getRotate());
+        newEllipse.setScaleX(original.getScaleX());
+        newEllipse.setScaleY(original.getScaleY());
 
-        // Crea la nuova shape wrapper
-        EllipseShape clone = new EllipseShape(
-            originalEll.getCenterX(),
-            originalEll.getCenterY(),
-            originalEll.getRadiusX(),
-            originalEll.getRadiusY(),
-            (javafx.scene.paint.Color) originalEll.getStroke()
-        );
-        
-        // Sostituisce il nodo (stesso hack del rettangolo)
-        try {
-            java.lang.reflect.Field nodeField = AbstractShape.class.getDeclaredField("node");
-            nodeField.setAccessible(true);
-            nodeField.set(clone, newEllipse);
-        } catch (Exception reflectionEx) {
-            System.err.println("[CLONE ELLIPSE] Impossibile accedere al campo node: " + reflectionEx.getMessage());
-        }
-
-        System.out.println("[CLONE ELLIPSE] Creata copia indipendente @ (" + 
-                          newEllipse.getCenterX() + ", " + newEllipse.getCenterY() + ")");
-
-        return clone;
-        
-    } catch (Exception e) {
-        System.err.println("[CLONE ELLIPSE ERROR] " + e.getMessage());
-        e.printStackTrace();
-        return null;
+        return new EllipseShape(newEllipse);
     }
-}
 
     @Override
     public double getRotation() {
