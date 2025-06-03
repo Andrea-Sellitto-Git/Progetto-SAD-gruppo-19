@@ -1049,4 +1049,23 @@ public class Controller {
 
         drawingPane.getChildren().remove(textField); // Rimuove il box di input
     }
+    
+    @FXML
+    private void sizeInc() {
+        Shape selected = mouseHandler.getSelectedShapeInstance();
+        if(selected!=null){
+            commandInvoker.execute(new ScaleShape(shapeManager, selected, 10));
+        }
+        
+    }
+
+    
+    @FXML
+    private void sizeDec() {
+        Shape selected = mouseHandler.getSelectedShapeInstance();
+        if(selected!=null){
+            commandInvoker.execute(new ScaleShape(shapeManager, selected, -10));
+        }
+    }
+    
 }

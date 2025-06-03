@@ -47,4 +47,6 @@ public interface ShapeManagerReceiver {
     boolean containsNode(Node node);
 
     void registerOnly(Shape shape);
+    
+    void scale(Shape shape,double delta);
 }

@@ -37,10 +37,10 @@ public class RectangleShape extends AbstractShape {
     @Override
     public void onDrag(double x, double y) {
         Rectangle r = (Rectangle) node;
-        r.setX(Math.min(startX, x));
-        r.setY(Math.min(startY, y));
-        r.setWidth(Math.abs(x - startX));
-        r.setHeight(Math.abs(y - startY));
+        r.setX(Math.min(getX(), x));
+        r.setY(Math.min(getY(), y));
+        r.setWidth(Math.abs(x - getX()));
+        r.setHeight(Math.abs(y - getY()));
     }
 
     @Override

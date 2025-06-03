@@ -11,8 +11,13 @@
 
             <!-- Barra comandi base -->
             <ToolBar fx:id="toolbar">
-                <Button fx:id="zoomOutButton" text="−" onAction="#onZoomOut"/>
-                <Button fx:id="zoomInButton"  text="+" onAction="#onZoomIn"/>
+                <VBox alignment="CENTER">
+                    <HBox spacing="5">
+                        <Button fx:id="zoomOutButton" text="−" onAction="#onZoomOut"/>
+                        <Button fx:id="zoomInButton"  text="+" onAction="#onZoomIn"/>
+                    </HBox>
+                    <Label text="Zoom" style="-fx-font-size: 10;" />
+                </VBox>
                 <Button fx:id="undoButton" text="↶ Annulla" onAction="#onUndo" />
                 <Button fx:id="saveButton" text="💾 Salva" />
                 <Button fx:id="loadButton" text="📂 Carica" />
@@ -26,6 +31,13 @@
                 <Button fx:id="gridButton" text="▦ Griglia" />
                 <Label text="Rotazione" />
                 <Slider fx:id="rotateSlider" blockIncrement="1.0" majorTickUnit="10.0" max="360.0" minorTickCount="1" showTickMarks="true" snapToTicks="true" />
+                <VBox alignment="CENTER">
+                    <HBox spacing="5">
+                        <Button fx:id="sizeIncButton" text="+" onAction="#sizeInc"/>
+                        <Button fx:id="sizeDecButton" text="-" onAction="#sizeDec"/>            
+                    </HBox>
+                    <Label text="Resize" style="-fx-font-size: 10;" />
+                </VBox>
             </ToolBar>
 
             <!-- Barra strumenti in stile Paint -->

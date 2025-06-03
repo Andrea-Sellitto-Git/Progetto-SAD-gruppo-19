@@ -132,4 +132,8 @@ public class ShapeManager implements ShapeManagerReceiver, ZOrderReceiver {
         currentShapes.add(AbstractShape.unwrapToAbstract(shape));
     }
 
+    @Override
+    public void scale(Shape shape,double delta){
+        shape.onDrag( shape.getX()+shape.getWidth()+delta , shape.getY()+shape.getHeight()+delta  );
+    }
 }

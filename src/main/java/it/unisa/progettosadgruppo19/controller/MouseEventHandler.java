@@ -191,6 +191,7 @@ public class MouseEventHandler implements ClipboardReceiver {
                 }
             } else {
                 isHit = fxShape.contains(x, y);
+                System.out.println("x "+x+" y "+y+ " "+isHit);
             }
 
             if (isHit) {
