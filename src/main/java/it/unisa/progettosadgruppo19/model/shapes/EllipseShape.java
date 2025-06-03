@@ -96,25 +96,55 @@ public class EllipseShape extends AbstractShape implements Shape {
 
     @Override
     public AbstractShape clone() {
-        Ellipse ell = (Ellipse) this.node;
+    try {
+        javafx.scene.shape.Ellipse originalEll = (javafx.scene.shape.Ellipse) this.node;
 
-        Ellipse newEllipse = new Ellipse(
-            ell.getCenterX(),
-            ell.getCenterY(),
-            ell.getRadiusX(),
-            ell.getRadiusY()
+        // Crea una nuova ellisse con le stesse proprietà geometriche
+        javafx.scene.shape.Ellipse newEllipse = new javafx.scene.shape.Ellipse(
+            originalEll.getCenterX(),
+            originalEll.getCenterY(),
+            originalEll.getRadiusX(),
+            originalEll.getRadiusY()
         );
 
-        newEllipse.setStroke((Color) ell.getStroke());
-        newEllipse.setFill(ell.getFill());
-        newEllipse.setTranslateX(ell.getTranslateX());
-        newEllipse.setTranslateY(ell.getTranslateY());
-        newEllipse.setStrokeWidth(ell.getStrokeWidth());
-        newEllipse.getStrokeDashArray().setAll(ell.getStrokeDashArray());
-        newEllipse.setRotate(ell.getRotate());
+        // Copia tutte le proprietà visive
+        newEllipse.setStroke(originalEll.getStroke());
+        newEllipse.setFill(originalEll.getFill());
+        newEllipse.setStrokeWidth(originalEll.getStrokeWidth());
+        newEllipse.getStrokeDashArray().setAll(originalEll.getStrokeDashArray());
+        newEllipse.setRotate(originalEll.getRotate());
+        newEllipse.setScaleX(originalEll.getScaleX());
+        newEllipse.setScaleY(originalEll.getScaleY());
 
-        return new EllipseShape(this.startX, this.startY, newEllipse, (Color) ell.getStroke());
+        // Crea la nuova shape wrapper
+        EllipseShape clone = new EllipseShape(
+            originalEll.getCenterX(),
+            originalEll.getCenterY(),
+            originalEll.getRadiusX(),
+            originalEll.getRadiusY(),
+            (javafx.scene.paint.Color) originalEll.getStroke()
+        );
+        
+        // Sostituisce il nodo (stesso hack del rettangolo)
+        try {
+            java.lang.reflect.Field nodeField = AbstractShape.class.getDeclaredField("node");
+            nodeField.setAccessible(true);
+            nodeField.set(clone, newEllipse);
+        } catch (Exception reflectionEx) {
+            System.err.println("[CLONE ELLIPSE] Impossibile accedere al campo node: " + reflectionEx.getMessage());
+        }
+
+        System.out.println("[CLONE ELLIPSE] Creata copia indipendente @ (" + 
+                          newEllipse.getCenterX() + ", " + newEllipse.getCenterY() + ")");
+
+        return clone;
+        
+    } catch (Exception e) {
+        System.err.println("[CLONE ELLIPSE ERROR] " + e.getMessage());
+        e.printStackTrace();
+        return null;
     }
+}
 
     @Override
     public double getRotation() {

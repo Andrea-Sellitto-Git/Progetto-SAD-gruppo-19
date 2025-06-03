@@ -46,6 +46,7 @@
                         <Button fx:id="lineButton" text="➖" />
                         <Button fx:id="rectButton" text="◻" />
                         <Button fx:id="ellipseButton" text="◯" />
+                        <Button fx:id="polygonButton" text="Poligono" />
                         <Button fx:id="textButton" text="A" />
                         <Spinner fx:id="fontSizeSpinner" />
                     </HBox>

@@ -79,15 +79,57 @@ public class RectangleShape extends AbstractShape {
     
     @Override
     public AbstractShape clone() {
-        Rectangle r = (Rectangle) this.node;
-        RectangleShape clone = new RectangleShape(r.getX(), r.getY(), r.getWidth(), r.getHeight());
-        clone.r.setStroke(r.getStroke());
-        clone.r.setFill(r.getFill());
-        clone.r.setTranslateX(r.getTranslateX());
-        clone.r.setTranslateY(r.getTranslateY());
-        clone.setRotation(getRotation());
+    try {
+        javafx.scene.shape.Rectangle originalRect = (javafx.scene.shape.Rectangle) this.node;
+        
+        // Crea un nuovo rettangolo con le stesse dimensioni ma SENZA posizione
+        javafx.scene.shape.Rectangle newRect = new javafx.scene.shape.Rectangle(
+            originalRect.getWidth(), 
+            originalRect.getHeight()
+        );
+        
+        // Copia tutte le proprietà visive
+        newRect.setStroke(originalRect.getStroke());
+        newRect.setFill(originalRect.getFill());
+        newRect.setStrokeWidth(originalRect.getStrokeWidth());
+        newRect.getStrokeDashArray().setAll(originalRect.getStrokeDashArray());
+        newRect.setRotate(originalRect.getRotate());
+        newRect.setScaleX(originalRect.getScaleX());
+        newRect.setScaleY(originalRect.getScaleY());
+        
+        // Imposta la posizione iniziale uguale all'originale
+        newRect.setX(originalRect.getX());
+        newRect.setY(originalRect.getY());
+        
+        // Crea la nuova shape wrapper
+        RectangleShape clone = new RectangleShape(
+            originalRect.getX(), 
+            originalRect.getY(), 
+            originalRect.getWidth(), 
+            originalRect.getHeight()
+        );
+        
+        // Sostituisce il nodo con quello configurato
+        // Hack: accedi al campo protetto attraverso reflection o modifica l'architettura
+        try {
+            java.lang.reflect.Field nodeField = AbstractShape.class.getDeclaredField("node");
+            nodeField.setAccessible(true);
+            nodeField.set(clone, newRect);
+        } catch (Exception reflectionEx) {
+            System.err.println("[CLONE RECT] Impossibile accedere al campo node: " + reflectionEx.getMessage());
+        }
+        
+        System.out.println("[CLONE RECT] Creata copia indipendente @ (" + 
+                          newRect.getX() + ", " + newRect.getY() + ")");
+        
         return clone;
+        
+    } catch (Exception e) {
+        System.err.println("[CLONE RECT ERROR] " + e.getMessage());
+        e.printStackTrace();
+        return null;
     }
+}
     
     @Override
     public double getRotation() {

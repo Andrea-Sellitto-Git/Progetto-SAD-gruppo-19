@@ -52,14 +52,58 @@ public class TextShape extends AbstractShape {
         return textNode.getLayoutBounds().getHeight();
     }
 
-    @Override
     public AbstractShape clone() {
-        TextShape cloned = new TextShape(textNode.getText(), textNode.getX(), textNode.getY());
-        cloned.setFontSize(this.getFontSize());     // Copia dimensione font
-        cloned.setColor((Color) textNode.getFill()); // Copia colore
-        cloned.setRotation(getRotation());
-        return cloned;
+    try {
+        javafx.scene.text.Text originalText = (javafx.scene.text.Text) this.node;
+        
+        // Crea un nuovo nodo Text completamente indipendente
+        javafx.scene.text.Text newText = new javafx.scene.text.Text(
+            originalText.getX(),
+            originalText.getY(),
+            originalText.getText()
+        );
+        
+        // Copia tutte le proprietà
+        newText.setFont(originalText.getFont());
+        newText.setFill(originalText.getFill());
+        newText.setStroke(originalText.getStroke());
+        newText.setStrokeWidth(originalText.getStrokeWidth());
+        newText.setRotate(originalText.getRotate());
+        newText.setScaleX(originalText.getScaleX());
+        newText.setScaleY(originalText.getScaleY());
+        
+        // Crea la nuova shape wrapper
+        TextShape clone = new TextShape(
+            originalText.getText(),
+            originalText.getX(),
+            originalText.getY()
+        );
+        
+        // Sostituisce il nodo
+        try {
+            java.lang.reflect.Field nodeField = AbstractShape.class.getDeclaredField("node");
+            nodeField.setAccessible(true);
+            nodeField.set(clone, newText);
+        } catch (Exception reflectionEx) {
+            System.err.println("[CLONE TEXT] Impossibile accedere al campo node: " + reflectionEx.getMessage());
+        }
+        
+        // Applica le proprietà
+        clone.setFontSize(getFontSize());
+        clone.setColor((javafx.scene.paint.Color) originalText.getFill());
+        clone.setRotation(getRotation());
+        
+        System.out.println("[CLONE TEXT] Creata copia indipendente: '" + 
+                          newText.getText() + "' @ (" + newText.getX() + ", " + newText.getY() + ")");
+        
+        return clone;
+        
+    } catch (Exception e) {
+        System.err.println("[CLONE TEXT ERROR] " + e.getMessage());
+        e.printStackTrace();
+        return null;
     }
+}
 
     public String getText() {
         return textNode.getText();

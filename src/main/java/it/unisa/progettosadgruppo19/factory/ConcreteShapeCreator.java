@@ -1,4 +1,5 @@
 package it.unisa.progettosadgruppo19.factory;
+import it.unisa.progettosadgruppo19.factory.FreeFormPolygonShapeCreator;
 
 /**
  * Factory concreta che restituisce lo ShapeCreator corrispondente al tipo
@@ -23,6 +24,8 @@ public class ConcreteShapeCreator {
                 new EllipseShapeCreator();
             case "Testo" ->
                 new TextShapeCreator();
+            case "Poligono" ->
+                new FreeFormPolygonShapeCreator();
             default ->
                 throw new IllegalArgumentException("Tipo non supportato: " + tipo);
         };

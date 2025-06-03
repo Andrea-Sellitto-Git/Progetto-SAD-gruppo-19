@@ -3,6 +3,7 @@ package it.unisa.progettosadgruppo19.adapter;
 import it.unisa.progettosadgruppo19.model.serialization.ShapeData;
 import it.unisa.progettosadgruppo19.model.shapes.AbstractShape;
 import it.unisa.progettosadgruppo19.model.shapes.TextShape;
+import it.unisa.progettosadgruppo19.model.shapes.FreeFormPolygonShape;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
@@ -11,6 +12,7 @@ import javafx.scene.text.Text;
 
 /**
  * Adapter che converte da AbstractShape a ShapeData per la persistenza.
+ * Supporta tutte le forme geometriche inclusi i poligoni a forma libera.
  */
 public class ShapeAdapter implements Serializable {
 
@@ -45,7 +47,7 @@ public class ShapeAdapter implements Serializable {
         Color strokeColor = (stroke instanceof Color c) ? c : Color.BLACK;
         Color fillColor = (fill instanceof Color c) ? c : Color.TRANSPARENT;
 
-        // Aggiunta gestione per TextShape
+        // Gestione speciale per TextShape
         if (shape instanceof TextShape textShape) {
             Text textNode = (Text) textShape.getNode();
             return new ShapeData(
@@ -62,6 +64,23 @@ public class ShapeAdapter implements Serializable {
             );
         }
 
+        // Gestione speciale per FreeFormPolygonShape
+        if (shape instanceof FreeFormPolygonShape polygonShape) {
+            return new ShapeData(
+                    type,
+                    shape.getX(),
+                    shape.getY(),
+                    shape.getWidth(),
+                    shape.getHeight(),
+                    shape.getRotation(),
+                    strokeColor,
+                    fillColor,
+                    polygonShape.getPointsAsString(), // Serializza i vertici come stringa
+                    0 // fontSize non applicabile per i poligoni
+            );
+        }
+
+        // Gestione standard per altre forme (Rectangle, Ellipse, Line)
         return new ShapeData(
                 type,
                 shape.getX(),
@@ -81,5 +100,14 @@ public class ShapeAdapter implements Serializable {
      */
     public ShapeData getShapeData() {
         return shapeData;
+    }
+
+    /**
+     * Restituisce la shape originale (se ancora disponibile).
+     *
+     * @return shape originale o null se transient
+     */
+    public AbstractShape getOriginalShape() {
+        return originalShape;
     }
 }

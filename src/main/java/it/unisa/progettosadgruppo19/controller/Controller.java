@@ -41,7 +41,7 @@ public class Controller {
     @FXML
     private ToolBar toolbar;
     @FXML
-    private Button lineButton, rectButton, ellipseButton, saveButton, loadButton, deleteButton, copyButton,
+    private Button lineButton, rectButton, ellipseButton, polygonButton, saveButton, loadButton, deleteButton, copyButton,
             cutButton, pasteButton, zoomInButton, zoomOutButton, bringToFrontButton, sendToBackButton, undoButton,
             gridButton;
     @FXML
@@ -52,6 +52,7 @@ public class Controller {
     
     private final List<AbstractShape> currentShapes = new ArrayList<>();
     private MouseEventHandler mouseHandler;
+    private PolygonMouseEventHandler polygonHandler;
     private ShapeManager shapeManager;
     private ShapeFileManager fileManager = new ShapeFileManager();
     private final ZoomManager zoomManager = new ZoomManager();
@@ -59,7 +60,7 @@ public class Controller {
     private StackUndoInvoker commandInvoker = new StackUndoInvoker();
     private GridManager gridManager;
 
-    private String selectedShape = "Linea";
+    private String selectedShape = null;
 
     /**
      * Inizializza il controller: collega i trasform, i listener dei bottoni,
@@ -81,12 +82,15 @@ public class Controller {
             mouseHandler.setToolbarHeight(toolbar.getHeight());
         });
 
+        setNeutralTool();
+        
         strokePicker.setValue(javafx.scene.paint.Color.BLACK);
         fillPicker.setValue(javafx.scene.paint.Color.TRANSPARENT);
 
         lineButton.setOnAction(e -> setTool("Linea"));
         rectButton.setOnAction(e -> setTool("Rettangolo"));
         ellipseButton.setOnAction(e -> setTool("Ellisse"));
+        polygonButton.setOnAction(e -> setTool("Poligono"));
 
         strokePicker.setOnAction(e -> applyStroke());
         fillPicker.setOnAction(e -> applyFill());
@@ -179,8 +183,7 @@ public class Controller {
             scaleTransform.setX(s);
             scaleTransform.setY(s);
         });
-    
-        
+
         rotateSlider.valueProperty().addListener((obs, oldValue, newValue) -> {
             if ( !rotateSlider.isValueChanging()) {
                 rotateSelected(Math.floor(newValue.doubleValue()));
@@ -220,6 +223,41 @@ public class Controller {
         }
     }
     
+    /**
+     * Attiva la modalità "neutra", cioè nessuno strumento di disegno selezionato:
+     *  – se c'era polygonHandler, lo stacca (detach e null)
+     *  – disabilita mouseHandler
+     *  – imposta selectedShape = null
+     *  – toglie stili CSS di evidenziazione dai pulsanti
+     */
+    private void setNeutralTool() {
+        // Detach del polygon handler se presente
+        if (polygonHandler != null) {
+            polygonHandler.detach();
+            polygonHandler = null;
+            System.out.println("[CONTROLLER] PolygonHandler detached.");
+        }
+        
+        // Disattiva il mouse handler standard
+        if (mouseHandler != null) {
+            mouseHandler.setToolActive(false);
+        }
+        
+        // Reset dello strumento selezionato
+        selectedShape = null;
+
+        // Rimuovi classe "active-tool" da tutti i pulsanti
+        lineButton.getStyleClass().remove("active-tool");
+        rectButton.getStyleClass().remove("active-tool");
+        ellipseButton.getStyleClass().remove("active-tool");
+        polygonButton.getStyleClass().remove("active-tool");
+        textButton.getStyleClass().remove("active-tool");
+        
+        // Ripristina il comportamento standard del mouse
+        drawingPane.setOnMouseClicked(mouseHandler::onMouseClick);
+        
+        System.out.println("[CONTROLLER] Modalità neutra attivata");
+    }
 
     /**
      * Seleziona il tipo di shape da creare.
@@ -228,12 +266,52 @@ public class Controller {
      * ecc.)
      */
     private void setTool(String tipo) {
-        selectedShape = tipo;
-        mouseHandler.setSelectedShape(tipo);
-        mouseHandler.setStrokeColor(strokePicker.getValue());
-        mouseHandler.setFillColor(fillPicker.getValue());
-        mouseHandler.setToolActive(true);
-        mouseHandler.unselectShape();
+        
+        setNeutralTool();
+        
+        if (tipo == null) {
+            // Modalità neutra esplicita
+            return;
+        }
+
+        if (tipo.equals("Poligono")) {
+            // Attivo l'handler dedicato al poligono
+            selectedShape = "Poligono";
+
+            // Creo SEMPRE un nuovo PolygonMouseEventHandler per evitare problemi di stato
+            // Non riutilizzare mai un handler precedente
+            polygonHandler = new PolygonMouseEventHandler(
+                    drawingPane,
+                    // Faccio un cast: nella lista currentShapes ci possono essere anche altri AbstractShape,
+                    // ma il costruttore di PolygonMouseEventHandler considera solo FreeFormPolygonShape.
+                    (List<FreeFormPolygonShape>)(List<?>) currentShapes,
+                    new ShapeManager(currentShapes, drawingPane),
+                    strokePicker.getValue(),
+                    fillPicker.getValue(),
+                    this::setNeutralTool // Callback per tornare automaticamente in modalità neutra
+            );
+            
+            // Evidenzia il pulsante attivo
+            polygonButton.getStyleClass().add("active-tool");
+            
+            System.out.println("[CONTROLLER] Tool Poligono attivato.");
+            
+        } else {
+            selectedShape = tipo;
+            mouseHandler.setSelectedShape(tipo);
+            mouseHandler.setStrokeColor(strokePicker.getValue());
+            mouseHandler.setFillColor(fillPicker.getValue());
+            mouseHandler.setToolActive(true);
+            mouseHandler.unselectShape();
+            
+            // Evidenzia il pulsante corrispondente
+            switch (tipo) {
+                case "Linea" -> lineButton.getStyleClass().add("active-tool");
+                case "Rettangolo" -> rectButton.getStyleClass().add("active-tool");
+                case "Ellisse" -> ellipseButton.getStyleClass().add("active-tool");
+                case "Testo" -> textButton.getStyleClass().add("active-tool");
+            }
+        }
 
         // Se attivo il testo, disabilita il mouseHandler per disegno shape
         if ("Testo".equals(tipo)) {
@@ -244,11 +322,10 @@ public class Controller {
         }
     }
 
-
-/**
- * Esegue il comando di salvataggio su file.
- */
-private void onSave() {
+    /**
+     * Esegue il comando di salvataggio su file.
+     */
+    private void onSave() {
         Stage stage = (Stage) saveButton.getScene().getWindow();
         new Save(stage, currentShapes, fileManager).execute();
     }
@@ -286,18 +363,15 @@ private void onSave() {
     }
 
     @FXML
-public void handlePaste() {
-        drawingPane.setOnMouseClicked(event -> {
-            commandInvoker.execute(new Paste(mouseHandler, shapeManager, event.getX(), event.getY()));
-            drawingPane.setOnMouseClicked(mouseHandler::onMouseClick); // Ripristina il comportamento standard
-        });
+    public void handlePaste() {
+        enablePasteMode();
     }
 
     /**
      * Zoom avanti applicando il fattore successivo.
      */
     @FXML
-private void onZoomIn() {
+    private void onZoomIn() {
         double s = zoomManager.zoomIn();
         scaleTransform.setX(s);
         scaleTransform.setY(s);
@@ -307,7 +381,7 @@ private void onZoomIn() {
      * Zoom avanti applicando il fattore precedente.
      */
     @FXML
-private void onZoomOut() {
+    private void onZoomOut() {
         double s = zoomManager.zoomOut();
         scaleTransform.setX(s);
         scaleTransform.setY(s);
@@ -317,19 +391,37 @@ private void onZoomOut() {
      * Annulla l'ultimo comando eseguito (undo).
      */
     @FXML
-private void onUndo() {
+    private void onUndo() {
         commandInvoker.undo();
     }
 
     /**
-     * Attiva la modalità click-per-incollare.
+     * Attiva la modalità click-per-incollare con gestione migliorata.
      */
     private void enablePasteMode() {
-        System.out.println("[PASTE MODE] Attivato: clicca sul canvas per incollare");
+        Shape clipboardShape = mouseHandler.getClipboard();
+        
+        if (clipboardShape == null) {
+            System.out.println("[PASTE MODE] Clipboard vuoto - nessuna operazione");
+            return;
+        }
+        
+        System.out.println("[PASTE MODE] Attivato: clicca sul canvas per incollare " + 
+                          clipboardShape.getClass().getSimpleName());
+        
         drawingPane.setOnMouseClicked(event -> {
-            System.out.println("[PASTE MODE] Click rilevato su: " + event.getX() + ", " + event.getY());
-            commandInvoker.execute(new Paste(mouseHandler, shapeManager, event.getX(), event.getY()));
+            double clickX = event.getX();
+            double clickY = event.getY();
+            
+            System.out.println("[PASTE MODE] Click rilevato su: " + clickX + ", " + clickY);
+            
+            // Esegui il comando paste migliorato
+            commandInvoker.execute(new Paste(mouseHandler, shapeManager, clickX, clickY));
+            
+            // Ripristina il comportamento normale del mouse
             drawingPane.setOnMouseClicked(mouseHandler::onMouseClick);
+            
+            System.out.println("[PASTE MODE] Modalità paste disattivata");
         });
     }
     

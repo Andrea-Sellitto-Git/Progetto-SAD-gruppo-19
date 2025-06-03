@@ -6,9 +6,11 @@ import it.unisa.progettosadgruppo19.factory.ConcreteShapeCreator;
 import it.unisa.progettosadgruppo19.factory.ShapeCreator;
 import it.unisa.progettosadgruppo19.model.shapes.AbstractShape;
 import it.unisa.progettosadgruppo19.model.shapes.Shape;
+import it.unisa.progettosadgruppo19.model.shapes.FreeFormPolygonShape;
 import it.unisa.progettosadgruppo19.command.*;
 import it.unisa.progettosadgruppo19.command.receiver.ClipboardReceiver;
 import it.unisa.progettosadgruppo19.strategy.*;
+import it.unisa.progettosadgruppo19.util.GeometryUtils;
 
 import javafx.scene.Node;
 import javafx.scene.effect.DropShadow;
@@ -18,13 +20,16 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Polygon;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Gestisce gli eventi mouse sul canvas per creare, selezionare, spostare,
- * ridimensionare, decorare e incollare le Shape. Implementa ClipboardReceiver
- * per supportare copy/paste.
+ * ridimensionare, decorare e incollare le Shape. Include supporto completo
+ * per i poligoni con movimento e ridimensionamento.
+ * Utilizza GeometryUtils per operazioni geometriche.
  */
 public class MouseEventHandler implements ClipboardReceiver {
 
@@ -51,13 +56,15 @@ public class MouseEventHandler implements ClipboardReceiver {
     private double resizeAnchorX, resizeAnchorY;
     private double startMouseX, startMouseY;
     private double lastMouseX, lastMouseY;
-    private double fontSize = 12;  // valore di default
+    private double fontSize = 12;
 
+    // Variabili specifiche per i poligoni
+    private double origPolygonX, origPolygonY, origPolygonWidth, origPolygonHeight;
+    private List<Double> origPolygonPoints;
 
     private static final double HANDLE_RADIUS = 6.0;
     private static final double ELLIPSE_BORDER_TOLERANCE = 6.0;
-    
-    
+    private static final double POLYGON_BORDER_TOLERANCE = 8.0;
 
     private Shape shapeToPaste;
     private Shape clipboardBuffer;
@@ -71,21 +78,17 @@ public class MouseEventHandler implements ClipboardReceiver {
         this.fontSize = fontSize;
     }
 
-
     public enum ResizeMode {
         NONE,
         LINE_START, LINE_END,
         RECT_LEFT, RECT_RIGHT, RECT_TOP, RECT_BOTTOM,
         RECT_TOP_LEFT, RECT_TOP_RIGHT, RECT_BOTTOM_LEFT, RECT_BOTTOM_RIGHT,
-        ELLIPSE_BORDER
+        ELLIPSE_BORDER,
+        POLYGON_BORDER  // Nuovo: ridimensionamento del poligono
     }
 
     /**
      * Costruisce un handler per il Pane e la lista di shape correnti.
-     *
-     * @param drawingPane il Pane su cui disegnare; non può essere {@code null}.
-     * @param currentShapes la lista di shape create; non può essere
-     * {@code null}.
      */
     public MouseEventHandler(Pane drawingPane, List<AbstractShape> currentShapes) {
         this.drawingPane = drawingPane;
@@ -98,57 +101,27 @@ public class MouseEventHandler implements ClipboardReceiver {
         this.toolbarHeightInitialized = true;
     }
 
-    /**
-     * Seleziona il tipo di shape da disegnare (es. "Linea", "Rettangolo", ...).
-     *
-     * @param tipo nome del tipo di shape.
-     */
     public void setSelectedShape(String selectedShape) {
         this.selectedShape = selectedShape;
     }
 
-    /**
-     * Imposta il colore del bordo delle nuove shape.
-     *
-     * @param strokeColor il colore di contorno.
-     */
     public void setStrokeColor(Color strokeColor) {
         this.strokeColor = strokeColor;
     }
 
-    /**
-     * Imposta il colore di riempimento delle nuove shape.
-     *
-     * @param fillColor il colore di riempimento.
-     */
     public void setFillColor(Color fillColor) {
         this.fillColor = fillColor;
     }
 
-    /**
-     * Restituisce l'istanza di shape selezionata.
-     *
-     * @return shape selezionata, o {@code null}.
-     */
     public void setSelectedShapeInstance(Shape shape) {
         this.selectedShapeInstance = shape;
     }
 
-    /**
-     * Salva una shape nel buffer per il paste.
-     *
-     * @param shape la shape da copiare; {@code null} per svuotare.
-     */
     @Override
     public void setClipboard(Shape shape) {
         this.clipboardBuffer = shape;
     }
 
-    /**
-     * Restituisce la shape attualmente nel buffer.
-     *
-     * @return la shape copiata, o {@code null} se vuoto.
-     */
     @Override
     public Shape getClipboard() {
         return clipboardBuffer;
@@ -158,12 +131,6 @@ public class MouseEventHandler implements ClipboardReceiver {
         return selectedShapeInstance;
     }
 
-    /**
-     * Attiva o disattiva l'elaborazione degli eventi per creare/modificare
-     * shape.
-     *
-     * @param active {@code true} per abilitare, {@code false} per ignorare.
-     */
     public void setToolActive(boolean active) {
         this.toolActive = active;
     }
@@ -172,29 +139,16 @@ public class MouseEventHandler implements ClipboardReceiver {
         this.invoker = invoker;
     }
 
+    /**
+     * Verifica se un punto è vicino a una linea usando GeometryUtils.
+     */
     private boolean isNearLine(double px, double py, double x1, double y1, double x2, double y2, double tolerance) {
-        double dx = x2 - x1;
-        double dy = y2 - y1;
-
-        if (dx == 0 && dy == 0) {
-            return Math.hypot(px - x1, py - y1) <= tolerance;
-        }
-
-        double t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
-        t = Math.max(0, Math.min(1, t));
-
-        double projX = x1 + t * dx;
-        double projY = y1 + t * dy;
-
-        return Math.hypot(px - projX, py - projY) <= tolerance;
+        return GeometryUtils.isNearLine(px, py, x1, y1, x2, y2, tolerance);
     }
 
     /**
-     * Evento mouse pressed: inizia la possibile creazione, selezione,
-     * spostamento o ridimensionamento di una shape. Non crea più immediatamente
-     * la figura, ma salva le coordinate iniziali.
-     *
-     * @param e evento di pressione del mouse
+     * Evento mouse pressed: gestisce l'inizio di creazione, selezione,
+     * spostamento o ridimensionamento inclusi i poligoni.
      */
     public void onPressed(MouseEvent e) {
         double x = e.getX();
@@ -203,8 +157,11 @@ public class MouseEventHandler implements ClipboardReceiver {
         pressX = x;
         pressY = y;
 
+        System.out.println("[PRESSED] Click su (" + x + ", " + y + ")");
+        
         if (selectedShapeInstance != null) {
             Node node = selectedShapeInstance.getNode();
+            System.out.println("[PRESSED] Shape selezionata: " + selectedShapeInstance.getClass().getSimpleName());
 
             if (node instanceof Line line) {
                 double sx = line.getStartX(), sy = line.getStartY();
@@ -212,10 +169,12 @@ public class MouseEventHandler implements ClipboardReceiver {
 
                 if (Math.hypot(x - sx, y - sy) < HANDLE_RADIUS) {
                     currentResizeMode = ResizeMode.LINE_START;
+                    System.out.println("[PRESSED] Modalità resize LINE_START");
                     return;
                 }
                 if (Math.hypot(x - ex, y - ey) < HANDLE_RADIUS) {
                     currentResizeMode = ResizeMode.LINE_END;
+                    System.out.println("[PRESSED] Modalità resize LINE_END");
                     return;
                 }
             } else if (node instanceof Rectangle rect) {
@@ -250,17 +209,16 @@ public class MouseEventHandler implements ClipboardReceiver {
                             rect.getX() + rect.getWidth();
                         case RECT_TOP_RIGHT, RECT_BOTTOM_RIGHT, RECT_RIGHT ->
                             rect.getX();
-                        default ->
-                            x;
+                        default -> x;
                     };
                     resizeAnchorY = switch (currentResizeMode) {
                         case RECT_TOP_LEFT, RECT_TOP_RIGHT, RECT_TOP ->
                             rect.getY() + rect.getHeight();
                         case RECT_BOTTOM_LEFT, RECT_BOTTOM_RIGHT, RECT_BOTTOM ->
                             rect.getY();
-                        default ->
-                            y;
+                        default -> y;
                     };
+                    System.out.println("[PRESSED] Modalità resize RECT: " + currentResizeMode);
                     return;
                 }
             } else if (node instanceof Ellipse ell) {
@@ -271,7 +229,31 @@ public class MouseEventHandler implements ClipboardReceiver {
                 double d = Math.hypot(dx, dy);
                 if (Math.abs(d - 1) < ELLIPSE_BORDER_TOLERANCE / Math.max(rx, ry)) {
                     currentResizeMode = ResizeMode.ELLIPSE_BORDER;
+                    System.out.println("[PRESSED] Modalità resize ELLIPSE_BORDER");
                     return;
+                }
+            } else if (node instanceof Polygon && selectedShapeInstance instanceof FreeFormPolygonShape polygonShape) {
+                // CORREZIONE: Migliore rilevamento per i poligoni
+                System.out.println("[PRESSED] Controllo poligono per resize/move");
+                
+                if (polygonShape.isNearBorder(x, y, POLYGON_BORDER_TOLERANCE)) {
+                    currentResizeMode = ResizeMode.POLYGON_BORDER;
+                    // Salva lo stato originale del poligono
+                    origPolygonX = polygonShape.getX();
+                    origPolygonY = polygonShape.getY();
+                    origPolygonWidth = polygonShape.getWidth();
+                    origPolygonHeight = polygonShape.getHeight();
+                    origPolygonPoints = new ArrayList<>(polygonShape.getPoints());
+                    
+                    // Imposta il punto di ancoraggio per il resize
+                    double[] center = polygonShape.getCenter();
+                    resizeAnchorX = center[0];
+                    resizeAnchorY = center[1];
+                    
+                    System.out.println("[PRESSED] Modalità resize POLYGON_BORDER");
+                    return;
+                } else {
+                    System.out.println("[PRESSED] Click interno al poligono - modalità movimento");
                 }
             } else if (node instanceof javafx.scene.text.Text textNode) {
                 origX = textNode.getX();
@@ -280,6 +262,7 @@ public class MouseEventHandler implements ClipboardReceiver {
         }
 
         if (currentResizeMode != ResizeMode.NONE) {
+            System.out.println("[PRESSED] Resize mode attivo: " + currentResizeMode);
             return;
         }
 
@@ -301,11 +284,19 @@ public class MouseEventHandler implements ClipboardReceiver {
                 origCenterY = ell.getCenterY();
                 origRadiusX = ell.getRadiusX();
                 origRadiusY = ell.getRadiusY();
+            } else if (node instanceof Polygon && selectedShapeInstance instanceof FreeFormPolygonShape polygonShape) {
+                // CORREZIONE: Salva la posizione originale del poligono per il movimento
+                origX = polygonShape.getX();
+                origY = polygonShape.getY();
+                System.out.println("[PRESSED] Preparato per movimento poligono da (" + origX + ", " + origY + ")");
             }
+            
+            System.out.println("[PRESSED] Preparato per movimento/resize");
             return;
         }
 
         if (!toolActive || selectedShape == null) {
+            System.out.println("[PRESSED] Tool non attivo o shape non selezionata");
             return;
         }
 
@@ -321,7 +312,6 @@ public class MouseEventHandler implements ClipboardReceiver {
             
             baseShape = (AbstractShape) creator.createShape(text, x, y, strokeColor, fontSize);
         } else {
-            // Per rettangoli, ellissi, linee, crea la shape con coordinate iniziali
             baseShape = (AbstractShape) creator.createShape(x, y, strokeColor);
         }
 
@@ -336,15 +326,13 @@ public class MouseEventHandler implements ClipboardReceiver {
         tempShape = new FillDecorator(tempShape, fillColor);
         tempShape.getNode().setUserData(tempShape);
         drawingPane.getChildren().add(tempShape.getNode());
-
+        
+        System.out.println("[PRESSED] Creata nuova shape: " + tempShape.getClass().getSimpleName());
     }
 
     /**
-     * Evento mouse dragged: se è attivo uno strumento di disegno, crea e
-     * aggiorna la forma in base alla posizione corrente. Se una shape è
-     * selezionata, la sposta o la ridimensiona.
-     *
-     * @param e evento di trascinamento del mouse
+     * Evento mouse dragged: gestisce trascinamento e ridimensionamento
+     * inclusi i poligoni.
      */
     public void onDragged(MouseEvent e) {
         double x = Math.min(Math.max(0, e.getX()), drawingPane.getWidth());
@@ -355,12 +343,13 @@ public class MouseEventHandler implements ClipboardReceiver {
 
         if (!isDragging) {
             isDragging = true;
-            
+            System.out.println("[DRAGGED] Iniziato trascinamento");
         }
 
         // Resize attivo
         if (selectedShapeInstance != null && currentResizeMode != ResizeMode.NONE) {
             Node node = selectedShapeInstance.getNode();
+            
             switch (currentResizeMode) {
                 case LINE_START -> {
                     Line l = (Line) node;
@@ -408,8 +397,14 @@ public class MouseEventHandler implements ClipboardReceiver {
                     ell.setRadiusX(radiusX);
                     ell.setRadiusY(radiusY);
                 }
-                default -> {
+                case POLYGON_BORDER -> {
+                    // CORREZIONE: Ridimensionamento migliorato del poligono
+                    if (selectedShapeInstance instanceof FreeFormPolygonShape polygonShape) {
+                        System.out.println("[DRAGGED] Ridimensionamento poligono");
+                        resizePolygonImproved(polygonShape, x, y);
+                    }
                 }
+                default -> {}
             }
             return;
         }
@@ -432,20 +427,19 @@ public class MouseEventHandler implements ClipboardReceiver {
                 ell.setCenterX(ell.getCenterX() + dx);
                 ell.setCenterY(ell.getCenterY() + dy);
             } else if (node instanceof javafx.scene.text.Text textNode) {
-                // Sposta il testo aggiornando X e Y
                 textNode.setX(textNode.getX() + dx);
                 textNode.setY(textNode.getY() + dy);
-
-                // Aggiorna ancore per il prossimo spostamento
                 moveAnchorX = x;
                 moveAnchorY = y;
-
                 return;
+            } else if (node instanceof Polygon && selectedShapeInstance instanceof FreeFormPolygonShape polygonShape) {
+                // CORREZIONE: Spostamento migliorato del poligono
+                System.out.println("[DRAGGED] Spostamento poligono dx=" + dx + ", dy=" + dy);
+                polygonShape.translate(dx, dy);
             }
-            // Aggiorna le ancore per il prossimo movimento
+            
             moveAnchorX = x;
             moveAnchorY = y;
-
         }
 
         // Disegno figura nuova
@@ -468,11 +462,55 @@ public class MouseEventHandler implements ClipboardReceiver {
     }
 
     /**
-     * Evento mouse released: completa le operazioni attive. Se una figura era
-     * in fase di disegno ma non è stata davvero trascinata, viene rimossa.
-     * Altrimenti, viene finalizzata con {@code onRelease()}.
-     *
-     * @param e evento di rilascio del mouse
+     * Ridimensiona un poligono migliorato con gestione più precisa.
+     */
+    private void resizePolygonImproved(FreeFormPolygonShape polygonShape, double mouseX, double mouseY) {
+        if (origPolygonPoints == null || origPolygonPoints.isEmpty()) {
+            System.out.println("[RESIZE] Punti originali non disponibili");
+            return;
+        }
+        
+        try {
+            // Calcola il fattore di scala basato sulla distanza dal centro
+            double centerX = resizeAnchorX;
+            double centerY = resizeAnchorY;
+            
+            // Distanza iniziale dal centro al punto di click
+            double originalDistance = Math.hypot(pressX - centerX, pressY - centerY);
+            // Distanza corrente dal centro al mouse
+            double currentDistance = Math.hypot(mouseX - centerX, mouseY - centerY);
+            
+            // Calcola il fattore di scala (minimo 0.1 per evitare dimensioni troppo piccole)
+            double scaleFactor = Math.max(0.1, currentDistance / Math.max(originalDistance, 1.0));
+            
+            System.out.println("[RESIZE] ScaleFactor: " + scaleFactor + " (dist orig: " + originalDistance + ", curr: " + currentDistance + ")");
+            
+            List<Double> newPoints = new ArrayList<>();
+            
+            for (int i = 0; i < origPolygonPoints.size(); i += 2) {
+                double origX = origPolygonPoints.get(i);
+                double origY = origPolygonPoints.get(i + 1);
+                
+                // Scala rispetto al centro
+                double newX = centerX + (origX - centerX) * scaleFactor;
+                double newY = centerY + (origY - centerY) * scaleFactor;
+                
+                newPoints.add(newX);
+                newPoints.add(newY);
+            }
+            
+            // Aggiorna i punti nel poligono
+            polygonShape.setAllPoints(newPoints);
+            
+        } catch (Exception e) {
+            System.err.println("[RESIZE POLYGON ERROR] " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Evento mouse released: completa le operazioni attive includendo
+     * i comandi undo per i poligoni.
      */
     public void onReleased(MouseEvent e) {
         if (currentResizeMode != ResizeMode.NONE && selectedShapeInstance != null) {
@@ -520,9 +558,36 @@ public class MouseEventHandler implements ClipboardReceiver {
                 applyUndoableStrategy(new Resize(selectedShapeInstance,
                         oldStartX, oldStartY, oldEndX, oldEndY,
                         newStartX, newStartY, newEndX, newEndY));
+            } else if (fx instanceof Polygon && selectedShapeInstance instanceof FreeFormPolygonShape polygonShape) {
+                // CORREZIONE: Usa il comando appropriato per il poligono
+                if (origPolygonPoints != null && !origPolygonPoints.equals(polygonShape.getPoints())) {
+                    System.out.println("[POLYGON RESIZE] Creando comando ResizePolygon");
+                    // Crea un comando personalizzato inline
+                    UndoableCommand resizeCommand = new UndoableCommand() {
+                        private final List<Double> oldPoints = new ArrayList<>(origPolygonPoints);
+                        private final List<Double> newPoints = new ArrayList<>(polygonShape.getPoints());
+                        
+                        @Override
+                        public void execute() {
+                            polygonShape.setAllPoints(newPoints);
+                            System.out.println("[POLYGON RESIZE] Applicato resize");
+                        }
+                        
+                        @Override
+                        public void undo() {
+                            polygonShape.setAllPoints(oldPoints);
+                            System.out.println("[POLYGON RESIZE UNDO] Ripristinato stato originale");
+                        }
+                    };
+                    
+                    if (invoker != null) {
+                        invoker.execute(resizeCommand);
+                    }
+                }
             }
 
             currentResizeMode = ResizeMode.NONE;
+            origPolygonPoints = null; // Reset
             return;
         }
 
@@ -557,6 +622,37 @@ public class MouseEventHandler implements ClipboardReceiver {
                 if (origX != newX || origY != newY) {
                     applyUndoableStrategy(new Move(selectedShapeInstance, origX, origY, newX, newY));
                 }
+            } else if (node instanceof Polygon && selectedShapeInstance instanceof FreeFormPolygonShape polygonShape) {
+                // CORREZIONE: Gestione corretta del movimento del poligono
+                double newX = polygonShape.getX();
+                double newY = polygonShape.getY();
+                if (Math.abs(origX - newX) > 0.1 || Math.abs(origY - newY) > 0.1) {
+                    System.out.println("[POLYGON MOVE] Da (" + origX + ", " + origY + ") a (" + newX + ", " + newY + ")");
+                    
+                    // Crea comando move personalizzato per poligono
+                    UndoableCommand moveCommand = new UndoableCommand() {
+                        private final double oldX = origX;
+                        private final double oldY = origY;
+                        private final double newX_final = newX;
+                        private final double newY_final = newY;
+                        
+                        @Override
+                        public void execute() {
+                            polygonShape.moveTo(newX_final, newY_final);
+                            System.out.println("[POLYGON MOVE] Spostato a (" + newX_final + ", " + newY_final + ")");
+                        }
+                        
+                        @Override
+                        public void undo() {
+                            polygonShape.moveTo(oldX, oldY);
+                            System.out.println("[POLYGON MOVE UNDO] Ripristinato a (" + oldX + ", " + oldY + ")");
+                        }
+                    };
+                    
+                    if (invoker != null) {
+                        invoker.execute(moveCommand);
+                    }
+                }
             }
 
             return;
@@ -586,6 +682,8 @@ public class MouseEventHandler implements ClipboardReceiver {
     }
 
     public void onMouseClick(MouseEvent e) {
+        System.out.println("[CLICK] Click su (" + e.getX() + ", " + e.getY() + ")");
+        
         // gestione logica incolla
         if (shapeToPaste != null) {
             handlePaste(e.getX(), e.getY());
@@ -593,6 +691,7 @@ public class MouseEventHandler implements ClipboardReceiver {
             return;
         }
 
+        // Reset degli effetti visivi
         for (Node node : drawingPane.getChildren()) {
             if (node instanceof javafx.scene.shape.Shape fxShape) {
                 fxShape.setStrokeWidth(1);
@@ -601,19 +700,47 @@ public class MouseEventHandler implements ClipboardReceiver {
         }
 
         selectedShapeInstance = null;
+        
+        // Cicla attraverso tutti i nodi per trovare quello cliccato
         for (Node node : drawingPane.getChildren()) {
             if (!(node instanceof javafx.scene.shape.Shape fxShape)) {
                 continue;
             }
 
-            boolean isHit;
+            boolean isHit = false;
+            String nodeType = fxShape.getClass().getSimpleName();
 
             if (fxShape instanceof Line line) {
                 double sx = line.getStartX(), sy = line.getStartY();
                 double ex = line.getEndX(), ey = line.getEndY();
-                isHit = isNearLine(e.getX(), e.getY(), sx, sy, ex, ey, HANDLE_RADIUS);
+                isHit = GeometryUtils.isNearLine(e.getX(), e.getY(), sx, sy, ex, ey, HANDLE_RADIUS);
+                System.out.println("[CLICK] Test Line: " + isHit);
+            } else if (fxShape instanceof Polygon polygon) {
+                // Test migliorato per poligoni usando GeometryUtils
+                System.out.println("[CLICK] Poligono trovato con " + polygon.getPoints().size()/2 + " vertici");
+                
+                // Prova prima il contains standard
+                isHit = polygon.contains(e.getX(), e.getY());
+                System.out.println("[CLICK] Contains standard: " + isHit);
+                
+                // Se non funziona, usa GeometryUtils
+                if (!isHit) {
+                    isHit = GeometryUtils.isPointInPolygon(e.getX(), e.getY(), polygon.getPoints());
+                    System.out.println("[CLICK] Test GeometryUtils: " + isHit);
+                }
+                
+                // Se ancora non funziona, verifica se è vicino ai bordi
+                if (!isHit) {
+                    isHit = GeometryUtils.isNearPolygonBorder(e.getX(), e.getY(), polygon.getPoints(), 10.0);
+                    System.out.println("[CLICK] Test vicino ai bordi: " + isHit);
+                }
+                
+                Object userData = polygon.getUserData();
+                System.out.println("[CLICK] UserData: " + (userData != null ? userData.getClass().getSimpleName() : "null"));
+                
             } else {
                 isHit = fxShape.contains(e.getX(), e.getY());
+                System.out.println("[CLICK] Test " + nodeType + ": " + isHit);
             }
 
             if (!isHit) {
@@ -623,47 +750,96 @@ public class MouseEventHandler implements ClipboardReceiver {
             Object userData = fxShape.getUserData();
             if (userData instanceof Shape shape) {
                 selectedShapeInstance = shape;
+                
+                // Applica effetto visivo di selezione
                 DropShadow ds = new DropShadow();
                 ds.setRadius(10);
                 ds.setColor(Color.BLACK);
                 fxShape.setEffect(ds);
+                
+                System.out.println("[CLICK] ✅ SELEZIONATO: " + shape.getClass().getSimpleName());
                 break;
+            } else {
+                System.out.println("[CLICK] ❌ UserData non valido per " + nodeType + ": " + 
+                    (userData != null ? userData.getClass().getSimpleName() : "null"));
             }
         }
-        System.out.println("[CLICK] Selezionato: " + (selectedShapeInstance != null ? selectedShapeInstance.getClass().getSimpleName() : "null"));
-
+        
         if (selectedShapeInstance == null) {
+            System.out.println("[CLICK] ❌ Nessuna shape selezionata");
             if (toolActive) {
                 return;
             }
-
             toolActive = false;
         }
-
     }
 
     public void setShapeToPaste(Shape shapeToPaste) {
         this.shapeToPaste = shapeToPaste;
     }
 
+    /**
+     * Gestisce l'incollaggio di una shape clonata in una posizione specifica.
+     * Crea una copia completamente indipendente della shape nel clipboard.
+     */
     private void handlePaste(double x, double y) {
-        shapeToPaste.setX(x);
-        shapeToPaste.setY(y);
+        try {
+            if (shapeToPaste != null) {
+                Shape independentCopy = createDeepCopy(shapeToPaste);
+                
+                if (independentCopy != null) {
+                    independentCopy.setX(x);
+                    independentCopy.setY(y);
+                    independentCopy.getNode().setUserData(independentCopy);
+                    drawingPane.getChildren().add(independentCopy.getNode());
+                    AbstractShape baseShape = AbstractShape.unwrapToAbstract(independentCopy);
+                    currentShapes.add(baseShape);
+                    setSelectedShapeInstance(independentCopy);
 
-        // Imposta UserData sul nodo
-        shapeToPaste.getNode().setUserData(shapeToPaste);
+                    System.out.println("[PASTE] Figura incollata: " + independentCopy.getClass().getSimpleName() 
+                                     + " @ (" + x + ", " + y + ")");
+                } else {
+                    System.err.println("[PASTE] Impossibile creare una copia della shape");
+                }
+            } else {
+                System.out.println("[PASTE] Nessuna shape da incollare");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("[PASTE ERROR] " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
-        // Aggiungi la figura alla UI
-        drawingPane.getChildren().add(shapeToPaste.getNode());
-
-        // Estrai l'AbstractShape per la logica
-        AbstractShape baseShape = AbstractShape.unwrapToAbstract(shapeToPaste);
-        currentShapes.add(baseShape);
-
-        // (RI)registra il riferimento anche nel MouseEventHandler, se usa una lista o mappa
-        setSelectedShapeInstance(shapeToPaste);
-
-        System.out.println("Figura incollata: " + shapeToPaste.getClass().getSimpleName());
+    /**
+     * Crea una copia profonda e completamente indipendente di una shape.
+     */
+    private Shape createDeepCopy(Shape originalShape) {
+        try {
+            if (originalShape == null) {
+                return null;
+            }
+            
+            Shape clonedShape = originalShape.clone();
+            
+            if (clonedShape == null) {
+                System.err.println("[DEEP COPY] Il metodo clone ha restituito null");
+                return null;
+            }
+            
+            if (clonedShape.getNode() == originalShape.getNode()) {
+                System.err.println("[DEEP COPY] ATTENZIONE: La copia condivide il nodo con l'originale!");
+            }
+            
+            System.out.println("[DEEP COPY] Copia creata: " + clonedShape.getClass().getSimpleName());
+            
+            return clonedShape;
+            
+        } catch (Exception e) {
+            System.err.println("[DEEP COPY ERROR] " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public void unselectShape() {
@@ -678,11 +854,10 @@ public class MouseEventHandler implements ClipboardReceiver {
     public void applyUndoableStrategy(MouseMultiInputs command) {
         MultiMouseInputsStrategy strategy = new MultiMouseInputsCommandStackInvoker(command, invoker);
         MultiMouseInputsContext context = new MultiMouseInputsContext(strategy);
-        context.onReleased(null); // Trigger minimo, sufficiente per isExecutable → true
+        context.onReleased(null);
     }
 
     public void setText(String text) {
         this.text = text;
     }
-
 }

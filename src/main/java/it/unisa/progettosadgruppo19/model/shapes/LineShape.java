@@ -94,14 +94,56 @@ public class LineShape extends AbstractShape{
     
     @Override
     public AbstractShape clone() {
-        Line l = (Line) this.node;
-        LineShape clone = new LineShape(l.getStartX(), l.getStartY(), l.getEndX(), l.getEndY(), (Color) l.getStroke());
-        clone.line.setFill(l.getFill());
-        clone.line.setTranslateX(l.getTranslateX());
-        clone.line.setTranslateY(l.getTranslateY());
-        clone.setRotation(getRotation());
+    try {
+        javafx.scene.shape.Line originalLine = (javafx.scene.shape.Line) this.node;
+        
+        // Crea una nuova linea con le stesse coordinate
+        javafx.scene.shape.Line newLine = new javafx.scene.shape.Line(
+            originalLine.getStartX(), 
+            originalLine.getStartY(), 
+            originalLine.getEndX(), 
+            originalLine.getEndY()
+        );
+        
+        // Copia tutte le proprietà visive
+        newLine.setStroke(originalLine.getStroke());
+        newLine.setFill(originalLine.getFill());
+        newLine.setStrokeWidth(originalLine.getStrokeWidth());
+        newLine.getStrokeDashArray().setAll(originalLine.getStrokeDashArray());
+        newLine.setRotate(originalLine.getRotate());
+        newLine.setScaleX(originalLine.getScaleX());
+        newLine.setScaleY(originalLine.getScaleY());
+        
+        // Crea la nuova shape wrapper
+        LineShape clone = new LineShape(
+            originalLine.getStartX(), 
+            originalLine.getStartY(), 
+            originalLine.getEndX(), 
+            originalLine.getEndY(), 
+            (javafx.scene.paint.Color) originalLine.getStroke()
+        );
+        
+        // Sostituisce il nodo
+        try {
+            java.lang.reflect.Field nodeField = AbstractShape.class.getDeclaredField("node");
+            nodeField.setAccessible(true);
+            nodeField.set(clone, newLine);
+        } catch (Exception reflectionEx) {
+            System.err.println("[CLONE LINE] Impossibile accedere al campo node: " + reflectionEx.getMessage());
+        }
+        
+        System.out.println("[CLONE LINE] Creata copia indipendente (" + 
+                          newLine.getStartX() + "," + newLine.getStartY() + 
+                          ") -> (" + newLine.getEndX() + "," + newLine.getEndY() + ")");
+        
         return clone;
+        
+    } catch (Exception e) {
+        System.err.println("[CLONE LINE ERROR] " + e.getMessage());
+        e.printStackTrace();
+        return null;
     }
+}
     
     @Override
     public double getRotation() {
