@@ -47,4 +47,5 @@ public interface Shape {
     void   setRotation(double degrees);
     Shape clone();
     
+    
 }

@@ -23,44 +23,28 @@ public class StrokeDecorator extends ShapeDecorator implements Serializable {
         this.stroke = stroke;
         ((javafx.scene.shape.Shape) decorated.getNode()).setStroke(stroke);
     }
-    
+
     @Override
     public Shape clone() {
-    try {
-        // Clona la shape decorata sottostante
-        Shape clonedDecorated = decorated.clone();
         
-        if (clonedDecorated == null) {
-            System.err.println("[STROKE DECORATOR] Impossibile clonare la shape sottostante");
+        try {
+            Shape clonedDecorated = decorated.clone();
+
+            if (clonedDecorated == null) {
+                System.err.println("[STROKE DECORATOR] Impossibile clonare la shape sottostante");
+                return null;
+            }
+
+            StrokeDecorator clonedDecorator = new StrokeDecorator(clonedDecorated, this.stroke);
+
+            System.out.println("[STROKE DECORATOR] Clone creato con stroke: " + this.stroke);
+            return clonedDecorator;
+
+        } catch (Exception e) {
+            System.err.println("[STROKE DECORATOR ERROR] " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
-        
-        // Ottieni il colore di stroke corrente dal nodo
-        javafx.scene.paint.Paint currentStroke = null;
-        try {
-            javafx.scene.Node node = decorated.getNode();
-            if (node instanceof javafx.scene.shape.Shape fxShape) {
-                currentStroke = fxShape.getStroke();
-            }
-        } catch (Exception e) {
-            System.err.println("[STROKE DECORATOR] Errore nel recupero del stroke: " + e.getMessage());
-            currentStroke = stroke; // Fallback al colore originale
-        }
-        
-        // Crea un nuovo decorator con il colore appropriato
-        javafx.scene.paint.Color strokeColor = (currentStroke instanceof javafx.scene.paint.Color c) ? c : stroke;
-        
-        StrokeDecorator clonedDecorator = new StrokeDecorator(clonedDecorated, strokeColor);
-        
-        System.out.println("[STROKE DECORATOR] Clone creato con stroke: " + strokeColor);
-        
-        return clonedDecorator;
-        
-    } catch (Exception e) {
-        System.err.println("[STROKE DECORATOR ERROR] " + e.getMessage());
-        e.printStackTrace();
-        return null;
     }
-}
-    
+
 }
