@@ -73,7 +73,7 @@
                         <Button fx:id="ellipseButton" text="◯" />
                         <Button fx:id="polygonButton" text="Poligono" />
                         <Button fx:id="textButton" text="A" />
-                        <Spinner fx:id="fontSizeSpinner" prefWidth="50"/>
+                        <Spinner fx:id="fontSizeSpinner" prefWidth="75"/>
                     </HBox>
                     <Label text="Forme" style="-fx-font-size: 10;" />
                 </VBox>
