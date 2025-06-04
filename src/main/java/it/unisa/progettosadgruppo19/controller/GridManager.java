@@ -5,7 +5,6 @@
  */
 package it.unisa.progettosadgruppo19.controller;
 
-
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -14,33 +13,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Gestisce la visualizzazione di una griglia sul Pane di disegno
- * permettendo di attivarla/disattivarla e di impostarne la spaziatura.
+ * Gestisce la visualizzazione di una griglia sul Pane di disegno permettendo di
+ * attivarla/disattivarla e di impostarne la spaziatura.
  */
 public class GridManager {
+
     private final List<Line> gridLines = new ArrayList<>();
     private final Pane drawingPane;
     private boolean gridVisible = false;
-    
+
     private double spacing = 20;
-    
-    /** Permette di cambiare la spaziatura della griglia */
+
+    /**
+     * Permette di cambiare la spaziatura della griglia
+     */
     public void setSpacing(double spacing) {
         this.spacing = spacing;
     }
-    
+
     /**
      * Costruisce un GridManager per il Pane specificato.
      *
-     * @param drawingPane il Pane su cui disegnare la griglia; non può essere {@code null}.
+     * @param drawingPane il Pane su cui disegnare la griglia; non può essere
+     * {@code null}.
      */
     public GridManager(Pane drawingPane) {
         this.drawingPane = drawingPane;
     }
 
-     /**
-     * Attiva o disattiva la griglia. Se attivata, disegna la griglia con la spaziatura
-     * corrente; se disattivata, la rimuove.
+    /**
+     * Attiva o disattiva la griglia. Se attivata, disegna la griglia con la
+     * spaziatura corrente; se disattivata, la rimuove.
      */
     public void toggleGrid() {
         gridVisible = !gridVisible;
@@ -53,8 +56,8 @@ public class GridManager {
     }
 
     /**
-     * Disegna le linee orizzontali e verticali sulla base
-     * dello spazio impostato e delle dimensioni del Pane.
+     * Disegna le linee orizzontali e verticali sulla base dello spazio
+     * impostato e delle dimensioni del Pane.
      */
     private void drawGrid() {
         //final double spacing = 20;
@@ -81,8 +84,8 @@ public class GridManager {
     }
 
     /**
-     * Rimuove tutte le linee della griglia dal Pane di disegno
-     * e svuota la lista interna.
+     * Rimuove tutte le linee della griglia dal Pane di disegno e svuota la
+     * lista interna.
      */
     private void removeGrid() {
         drawingPane.getChildren().removeAll(gridLines);
@@ -97,7 +100,7 @@ public class GridManager {
     public int getGridLayerCount() {
         return gridLines.size();
     }
-    
+
 }
 /*
 /*
@@ -177,4 +180,3 @@ public class GridManager {
     }
     
 }*/
-

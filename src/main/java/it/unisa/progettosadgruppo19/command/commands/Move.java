@@ -1,5 +1,4 @@
 // Sostituisci il comando Move esistente con questa versione migliorata
-
 package it.unisa.progettosadgruppo19.command.commands;
 
 import it.unisa.progettosadgruppo19.command.MouseMultiInputs;
@@ -15,8 +14,8 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.text.Text;
 
 /**
- * Comando undoable per spostare qualsiasi tipo di shape,
- * inclusi i poligoni con gestione specializzata.
+ * Comando undoable per spostare qualsiasi tipo di shape, inclusi i poligoni con
+ * gestione specializzata.
  */
 public class Move implements MouseMultiInputs, UndoableCommand {
 
@@ -56,14 +55,14 @@ public class Move implements MouseMultiInputs, UndoableCommand {
     @Override
     public void execute() {
         Node node = shape.getNode();
-        
+
         if (node instanceof Line line && !Double.isNaN(newX2)) {
             // Gestione Line con due punti
             line.setStartX(newX1);
             line.setStartY(newY1);
             line.setEndX(newX2);
             line.setEndY(newY2);
-            
+
         } else if (node instanceof Rectangle rect) {
             // Gestione Rectangle
             double width = rect.getWidth();
@@ -72,7 +71,7 @@ public class Move implements MouseMultiInputs, UndoableCommand {
             double boundedY = Math.max(0, Math.min(newY1, rect.getParent().getLayoutBounds().getHeight() - height));
             rect.setX(boundedX);
             rect.setY(boundedY);
-            
+
         } else if (node instanceof Ellipse ell) {
             // Gestione Ellipse
             double rx = ell.getRadiusX();
@@ -81,20 +80,20 @@ public class Move implements MouseMultiInputs, UndoableCommand {
             double boundedCY = Math.max(ry, Math.min(newY1, ell.getParent().getLayoutBounds().getHeight() - ry));
             ell.setCenterX(boundedCX);
             ell.setCenterY(boundedCY);
-            
+
         } else if (node instanceof Text text) {
             // Gestione Text
             double boundedX = Math.max(0, Math.min(newX1, text.getParent().getLayoutBounds().getWidth()));
             double boundedY = Math.max(0, Math.min(newY1, text.getParent().getLayoutBounds().getHeight()));
             text.setX(boundedX);
             text.setY(boundedY);
-            
+
         } else if (node instanceof Polygon && shape instanceof FreeFormPolygonShape polygonShape) {
             // Gestione specializzata per FreeFormPolygonShape
             double deltaX = newX1 - oldX1;
             double deltaY = newY1 - oldY1;
             polygonShape.translate(deltaX, deltaY);
-            
+
         } else {
             // Fallback generico per altre shape
             shape.setX(newX1);
@@ -102,50 +101,50 @@ public class Move implements MouseMultiInputs, UndoableCommand {
         }
 
         executed = true;
-        System.out.println("[MOVE] Spostato " + shape.getClass().getSimpleName() + 
-                          " da (" + oldX1 + ", " + oldY1 + ") a (" + newX1 + ", " + newY1 + ")");
+        System.out.println("[MOVE] Spostato " + shape.getClass().getSimpleName()
+                + " da (" + oldX1 + ", " + oldY1 + ") a (" + newX1 + ", " + newY1 + ")");
     }
 
     @Override
     public void undo() {
         Node node = shape.getNode();
-        
+
         if (node instanceof Line line && !Double.isNaN(oldX2)) {
             // Ripristina Line con due punti
             line.setStartX(oldX1);
             line.setStartY(oldY1);
             line.setEndX(oldX2);
             line.setEndY(oldY2);
-            
+
         } else if (node instanceof Rectangle rect) {
             // Ripristina Rectangle
             rect.setX(oldX1);
             rect.setY(oldY1);
-            
+
         } else if (node instanceof Ellipse ell) {
             // Ripristina Ellipse
             ell.setCenterX(oldX1);
             ell.setCenterY(oldY1);
-            
+
         } else if (node instanceof Text text) {
             // Ripristina Text
             text.setX(oldX1);
             text.setY(oldY1);
-            
+
         } else if (node instanceof Polygon && shape instanceof FreeFormPolygonShape polygonShape) {
             // Ripristina FreeFormPolygonShape
             double deltaX = oldX1 - newX1;
             double deltaY = oldY1 - newY1;
             polygonShape.translate(deltaX, deltaY);
-            
+
         } else {
             // Fallback generico
             shape.setX(oldX1);
             shape.setY(oldY1);
         }
 
-        System.out.println("[UNDO MOVE] Ripristinato " + shape.getClass().getSimpleName() + 
-                          " alla posizione (" + oldX1 + ", " + oldY1 + ")");
+        System.out.println("[UNDO MOVE] Ripristinato " + shape.getClass().getSimpleName()
+                + " alla posizione (" + oldX1 + ", " + oldY1 + ")");
     }
 
     @Override

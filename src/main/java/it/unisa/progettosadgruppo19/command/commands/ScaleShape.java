@@ -17,8 +17,8 @@ public class ScaleShape implements UndoableCommand {
     private final double delta;
     private final ShapeManagerReceiver shapeManager;
     private final Shape toScale;
-    
-    public ScaleShape(ShapeManagerReceiver shapeManager,Shape toScale,double delta){
+
+    public ScaleShape(ShapeManagerReceiver shapeManager, Shape toScale, double delta) {
         this.shapeManager = shapeManager;
         this.delta = delta;
         this.toScale = toScale;
@@ -26,12 +26,12 @@ public class ScaleShape implements UndoableCommand {
 
     @Override
     public void undo() {
-        shapeManager.scale(toScale,-delta);
+        shapeManager.scale(toScale, -delta);
     }
 
     @Override
     public void execute() {
-        shapeManager.scale(toScale,delta);
+        shapeManager.scale(toScale, delta);
     }
-    
+
 }

@@ -21,8 +21,10 @@ public class Cut implements UndoableCommand {
     /**
      * Costruisce un comando Cut per la shape indicata.
      *
-     * @param clipboard il receiver del clipboard in cui salvare la clone della shape; non può essere {@code null}
-     * @param shapeManager il receiver responsabile della gestione delle shape; non può essere {@code null}
+     * @param clipboard il receiver del clipboard in cui salvare la clone della
+     * shape; non può essere {@code null}
+     * @param shapeManager il receiver responsabile della gestione delle shape;
+     * non può essere {@code null}
      * @param shape la shape da tagliare; non può essere {@code null}
      */
     public Cut(ClipboardReceiver clipboard, ShapeManagerReceiver shapeManager, Shape shape) {
@@ -34,8 +36,8 @@ public class Cut implements UndoableCommand {
     }
 
     /**
-     * Esegue il cut: se l'indice è valido, clona la shape nel clipboard
-     * e rimuove l'originale dal manager. Altrimenti stampa un errore.
+     * Esegue il cut: se l'indice è valido, clona la shape nel clipboard e
+     * rimuove l'originale dal manager. Altrimenti stampa un errore.
      */
     @Override
     public void execute() {
@@ -49,8 +51,8 @@ public class Cut implements UndoableCommand {
     }
 
     /**
-     * Annulla il cut: se l'indice è valido, reinserisce la shape
-     * nella posizione originaria e svuota il clipboard.
+     * Annulla il cut: se l'indice è valido, reinserisce la shape nella
+     * posizione originaria e svuota il clipboard.
      */
     @Override
     public void undo() {
@@ -63,8 +65,9 @@ public class Cut implements UndoableCommand {
         System.out.println("[UNDO CUT] Figura reinserita a indice: " + index + " e clipboard svuotata");
     }
 
-     /**
-     * Rimuove eventuali decoratori dalla shape per ottenere un'istanza di {@link AbstractShape}.
+    /**
+     * Rimuove eventuali decoratori dalla shape per ottenere un'istanza di
+     * {@link AbstractShape}.
      *
      * @param shape la shape eventualmente decorata
      * @return l'istanza di base non decorata

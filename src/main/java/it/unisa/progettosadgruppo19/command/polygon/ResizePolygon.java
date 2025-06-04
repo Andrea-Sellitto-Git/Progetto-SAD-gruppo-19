@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Comando undoable per ridimensionare un poligono.
- * Memorizza i punti originali e quelli nuovi per supportare undo/redo.
+ * Comando undoable per ridimensionare un poligono. Memorizza i punti originali
+ * e quelli nuovi per supportare undo/redo.
  */
 public class ResizePolygon implements MouseMultiInputs, UndoableCommand {
 
@@ -52,12 +52,12 @@ public class ResizePolygon implements MouseMultiInputs, UndoableCommand {
             // Aggiorna il nodo JavaFX
             Polygon fxPolygon = (Polygon) polygonShape.getNode();
             fxPolygon.getPoints().setAll(points);
-            
+
             // Aggiorna anche la lista interna del poligono
             List<Double> internalPoints = polygonShape.getPoints();
             internalPoints.clear();
             internalPoints.addAll(points);
-            
+
         } catch (Exception e) {
             System.err.println("[RESIZE POLYGON ERROR] " + e.getMessage());
             e.printStackTrace();

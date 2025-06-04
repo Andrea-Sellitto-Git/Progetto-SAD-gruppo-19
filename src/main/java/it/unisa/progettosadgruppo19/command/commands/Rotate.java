@@ -19,21 +19,21 @@ public class Rotate implements UndoableCommand {
     private double degreesToRotate;
     private double degreesOriginal;
 
-    public Rotate(ShapeManagerReceiver shapeManager, Shape toRotate,double degrees){
+    public Rotate(ShapeManagerReceiver shapeManager, Shape toRotate, double degrees) {
         this.shapeManager = shapeManager;
         this.toRotate = toRotate;
         this.degreesToRotate = degrees;
     }
-    
+
     @Override
     public void undo() {
-        shapeManager.rotateShape(toRotate,degreesOriginal);
+        shapeManager.rotateShape(toRotate, degreesOriginal);
     }
 
     @Override
     public void execute() {
         this.degreesOriginal = toRotate.getRotation();
-        shapeManager.rotateShape(toRotate,degreesToRotate);
+        shapeManager.rotateShape(toRotate, degreesToRotate);
     }
-    
+
 }

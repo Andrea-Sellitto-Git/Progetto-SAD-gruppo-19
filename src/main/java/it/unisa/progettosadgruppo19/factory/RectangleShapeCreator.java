@@ -1,6 +1,5 @@
 package it.unisa.progettosadgruppo19.factory;
 
-
 import it.unisa.progettosadgruppo19.model.shapes.RectangleShape;
 import it.unisa.progettosadgruppo19.model.shapes.Shape;
 import javafx.scene.paint.Color;

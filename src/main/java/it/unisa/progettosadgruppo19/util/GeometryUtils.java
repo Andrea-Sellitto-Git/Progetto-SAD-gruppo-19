@@ -5,7 +5,6 @@ import java.util.List;
 
 /**
  * Classe di utilità per operazioni geometriche comuni.
- * Segue il pattern Utility Class con metodi statici.
  */
 public final class GeometryUtils {
     

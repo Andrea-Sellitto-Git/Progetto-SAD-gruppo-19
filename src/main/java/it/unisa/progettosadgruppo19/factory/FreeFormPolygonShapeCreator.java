@@ -1,4 +1,3 @@
-
 package it.unisa.progettosadgruppo19.factory;
 
 import it.unisa.progettosadgruppo19.model.shapes.FreeFormPolygonShape;
@@ -11,7 +10,8 @@ import javafx.scene.paint.Color;
 public class FreeFormPolygonShapeCreator extends ShapeCreator {
 
     /**
-     * Crea un FreeFormPolygonShape con primo vertice (startX,startY) e stroke definito.
+     * Crea un FreeFormPolygonShape con primo vertice (startX,startY) e stroke
+     * definito.
      */
     @Override
     public Shape createShape(double startX, double startY, Color stroke) {

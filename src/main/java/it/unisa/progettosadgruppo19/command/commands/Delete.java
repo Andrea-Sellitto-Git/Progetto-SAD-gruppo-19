@@ -6,8 +6,9 @@ import it.unisa.progettosadgruppo19.decorator.ShapeDecorator;
 import it.unisa.progettosadgruppo19.model.shapes.Shape;
 
 /**
- * Comando undoable per rimuovere una {@link Shape} dal {@link ShapeManagerReceiver}.
- * Memorizza l'indice originale per permettere l'undo.
+ * Comando undoable per rimuovere una {@link Shape} dal
+ * {@link ShapeManagerReceiver}. Memorizza l'indice originale per permettere
+ * l'undo.
  */
 public class Delete implements UndoableCommand {
 
@@ -18,7 +19,8 @@ public class Delete implements UndoableCommand {
     /**
      * Costruisce un comando Delete per la shape indicata.
      *
-     * @param shapeManager il receiver responsabile della gestione delle shape; non può essere {@code null}
+     * @param shapeManager il receiver responsabile della gestione delle shape;
+     * non può essere {@code null}
      * @param shape la shape da rimuovere; non può essere {@code null}
      */
     public Delete(ShapeManagerReceiver shapeManager, Shape shape) {
@@ -39,9 +41,8 @@ public class Delete implements UndoableCommand {
     }
 
     /**
-    * Annulla la cancellazione reinserendo la shape
-    * alla posizione salvata.
-    */    
+     * Annulla la cancellazione reinserendo la shape alla posizione salvata.
+     */
     @Override
     public void undo() {
         System.out.println("[UNDO DELETE] Inserisco a indice: " + index);
@@ -49,12 +50,12 @@ public class Delete implements UndoableCommand {
     }
 
     /**
-    * Svolge il “nudo” della shape, rimuovendo eventuali
-    * {@link ShapeDecorator} per ottenere l'istanza di base.
-    *
-    * @param shape la shape eventualmente decorata
-    * @return la shape originale senza decorator
-    */
+     * Svolge il “nudo” della shape, rimuovendo eventuali {@link ShapeDecorator}
+     * per ottenere l'istanza di base.
+     *
+     * @param shape la shape eventualmente decorata
+     * @return la shape originale senza decorator
+     */
     private Shape unwrap(Shape shape) {
         while (shape instanceof ShapeDecorator decorator) {
             shape = decorator.getWrapped();

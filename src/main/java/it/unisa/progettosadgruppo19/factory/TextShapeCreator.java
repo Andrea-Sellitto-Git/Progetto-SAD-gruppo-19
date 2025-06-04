@@ -26,5 +26,3 @@ public class TextShapeCreator extends ShapeCreator {
         throw new UnsupportedOperationException("Use createShape(String, double, double, Color, double) for TextShape.");
     }
 }
-
-

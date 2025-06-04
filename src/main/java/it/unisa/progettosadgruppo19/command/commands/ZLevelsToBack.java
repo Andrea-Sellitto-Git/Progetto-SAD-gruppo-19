@@ -17,8 +17,9 @@ public class ZLevelsToBack implements UndoableCommand {
     /**
      * Costruisce il comando per portare la shape in secondo piano.
      *
-     * @param receiver    il receiver per modificare l'ordine Z; non può essere {@code null}
-     * @param shape       la shape da spostare; non può essere {@code null}
+     * @param receiver il receiver per modificare l'ordine Z; non può essere
+     * {@code null}
+     * @param shape la shape da spostare; non può essere {@code null}
      * @param targetIndex l'indice di destinazione per il livello Z
      */
     public ZLevelsToBack(ZOrderReceiver receiver, Shape shape, int targetIndex) {
@@ -28,8 +29,8 @@ public class ZLevelsToBack implements UndoableCommand {
     }
 
     /**
-     * Esegue il comando salvando l'indice corrente
-     * e impostando il nuovo indice Z specificato.
+     * Esegue il comando salvando l'indice corrente e impostando il nuovo indice
+     * Z specificato.
      */
     @Override
     public void execute() {

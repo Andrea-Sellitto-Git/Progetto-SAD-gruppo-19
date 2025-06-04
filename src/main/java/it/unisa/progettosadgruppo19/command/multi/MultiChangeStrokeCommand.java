@@ -14,23 +14,23 @@ import java.util.Map;
  * Comando per cambiare il colore del bordo di multiple shape.
  */
 public class MultiChangeStrokeCommand implements MouseMultiInputs, UndoableCommand {
-    
+
     private final List<Shape> shapes;
     private final Color newStroke;
     private final Map<Shape, Color> originalStrokes;
-    
+
     public MultiChangeStrokeCommand(List<Shape> shapes, Color newStroke) {
         this.shapes = shapes;
         this.newStroke = newStroke;
         this.originalStrokes = new HashMap<>();
-        
+
         // Salva i colori originali
         for (Shape shape : shapes) {
             javafx.scene.shape.Shape fxShape = (javafx.scene.shape.Shape) shape.getNode();
             originalStrokes.put(shape, (Color) fxShape.getStroke());
         }
     }
-    
+
     @Override
     public void execute() {
         System.out.println("[MULTI-STROKE] Cambio stroke di " + shapes.size() + " shape a " + newStroke);
@@ -39,7 +39,7 @@ public class MultiChangeStrokeCommand implements MouseMultiInputs, UndoableComma
             fxShape.setStroke(newStroke);
         }
     }
-    
+
     @Override
     public void undo() {
         System.out.println("[MULTI-STROKE UNDO] Ripristino stroke originali di " + shapes.size() + " shape");
@@ -48,19 +48,23 @@ public class MultiChangeStrokeCommand implements MouseMultiInputs, UndoableComma
             fxShape.setStroke(originalStrokes.get(shape));
         }
     }
-    
+
     @Override
-    public void onPressed(MouseEvent e) {}
-    
+    public void onPressed(MouseEvent e) {
+    }
+
     @Override
-    public void onDragged(MouseEvent e) {}
-    
+    public void onDragged(MouseEvent e) {
+    }
+
     @Override
-    public void onReleased(MouseEvent e) {}
-    
+    public void onReleased(MouseEvent e) {
+    }
+
     @Override
-    public void onMouseClick(MouseEvent e) {}
-    
+    public void onMouseClick(MouseEvent e) {
+    }
+
     @Override
     public boolean isExecutable() {
         return true;

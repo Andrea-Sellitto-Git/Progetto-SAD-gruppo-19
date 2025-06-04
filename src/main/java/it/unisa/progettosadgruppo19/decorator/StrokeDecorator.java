@@ -9,7 +9,7 @@ import javafx.scene.paint.Color;
  */
 public class StrokeDecorator extends ShapeDecorator implements Serializable {
 
-    private Color stroke; 
+    private Color stroke;
 
     public StrokeDecorator(Shape decorated, Color stroke) {
         super(decorated);

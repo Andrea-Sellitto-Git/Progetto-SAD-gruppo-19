@@ -14,6 +14,7 @@ public abstract class AbstractShape implements Shape {
      * Nodo JavaFX deputato al rendering (Line, Rectangle, Ellipse).
      */
     protected final Node node;
+
     /**
      * Costruisce una AbstractShape avvolgendo il nodo specificato.
      *
@@ -60,18 +61,17 @@ public abstract class AbstractShape implements Shape {
     /**
      * Restituisce la coordinata X dell'estremo sinistro della shape.
      *
-     * @param  x imposta valore x minimo
+     * @param x imposta valore x minimo
      */
     public abstract void setX(double x);
 
     /**
      * Restituisce la coordinata Y dell'estremo superiore della shape.
      *
-     * @param  y imposta valore y minimo
+     * @param y imposta valore y minimo
      */
     public abstract void setY(double y);
 
-    
     /**
      * Restituisce la larghezza complessiva della shape.
      *
@@ -85,22 +85,18 @@ public abstract class AbstractShape implements Shape {
      * @return differenza verticale tra i bordi
      */
     public abstract double getHeight();
-    
-     
+
     public abstract double getRotation();
 
     public abstract void setRotation(double degrees);
-    
+
     @Override
     public abstract AbstractShape clone(); // Sarà implementato dalle sottoclassi
 
-
-    
     public void moveBy(double dx, double dy) {
         node.setTranslateX(node.getTranslateX() + dx);
         node.setTranslateY(node.getTranslateY() + dy);
     }
-
 
     public static AbstractShape unwrapToAbstract(Shape shape) {
         while (shape instanceof ShapeDecorator) {

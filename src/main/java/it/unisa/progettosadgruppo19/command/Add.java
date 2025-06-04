@@ -4,6 +4,7 @@ import it.unisa.progettosadgruppo19.model.shapes.Shape;
 import it.unisa.progettosadgruppo19.controller.ShapeManager;
 
 public class Add implements UndoableCommand {
+
     private final ShapeManager manager;
     private final Shape shape;
 

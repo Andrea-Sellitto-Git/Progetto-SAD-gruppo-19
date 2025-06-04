@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Comando undoable per spostare un poligono.
- * Gestisce lo spostamento di tutti i vertici del poligono.
+ * Comando undoable per spostare un poligono. Gestisce lo spostamento di tutti i
+ * vertici del poligono.
  */
 public class MovePolygon implements MouseMultiInputs, UndoableCommand {
 
@@ -26,7 +26,7 @@ public class MovePolygon implements MouseMultiInputs, UndoableCommand {
      *
      * @param polygonShape il poligono da spostare
      * @param oldX coordinata X originale
-     * @param oldY coordinata Y originale  
+     * @param oldY coordinata Y originale
      * @param newX nuova coordinata X
      * @param newY nuova coordinata Y
      */
@@ -36,15 +36,15 @@ public class MovePolygon implements MouseMultiInputs, UndoableCommand {
         this.oldY = oldY;
         this.newX = newX;
         this.newY = newY;
-        
+
         // Calcola le differenze
         double deltaX = newX - oldX;
         double deltaY = newY - oldY;
-        
+
         // Salva i punti originali e calcola quelli nuovi
         this.oldPoints = new ArrayList<>(polygonShape.getPoints());
         this.newPoints = new ArrayList<>();
-        
+
         for (int i = 0; i < oldPoints.size(); i += 2) {
             newPoints.add(oldPoints.get(i) + deltaX);      // X
             newPoints.add(oldPoints.get(i + 1) + deltaY);  // Y
@@ -71,12 +71,12 @@ public class MovePolygon implements MouseMultiInputs, UndoableCommand {
             // Aggiorna il nodo JavaFX
             Polygon fxPolygon = (Polygon) polygonShape.getNode();
             fxPolygon.getPoints().setAll(points);
-            
+
             // Aggiorna anche la lista interna del poligono
             List<Double> internalPoints = polygonShape.getPoints();
             internalPoints.clear();
             internalPoints.addAll(points);
-            
+
         } catch (Exception e) {
             System.err.println("[MOVE POLYGON ERROR] " + e.getMessage());
             e.printStackTrace();

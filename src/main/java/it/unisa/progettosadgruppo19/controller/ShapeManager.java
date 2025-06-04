@@ -120,9 +120,10 @@ public class ShapeManager implements ShapeManagerReceiver, ZOrderReceiver {
     }
 
     @Override
-    public void rotateShape(Shape shape,double degrees){
+    public void rotateShape(Shape shape, double degrees) {
         shape.setRotation(degrees);
     }
+
     public boolean containsNode(Node node) {
         return drawingPane.getChildren().contains(node);
     }
@@ -133,7 +134,7 @@ public class ShapeManager implements ShapeManagerReceiver, ZOrderReceiver {
     }
 
     @Override
-    public void scale(Shape shape,double delta){
-        shape.onDrag( shape.getX()+shape.getWidth()+delta , shape.getY()+shape.getHeight()+delta  );
+    public void scale(Shape shape, double delta) {
+        shape.onDrag(shape.getX() + shape.getWidth() + delta, shape.getY() + shape.getHeight() + delta);
     }
 }

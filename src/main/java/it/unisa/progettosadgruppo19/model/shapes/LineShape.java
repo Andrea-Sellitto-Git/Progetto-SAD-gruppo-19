@@ -6,7 +6,7 @@ import javafx.scene.shape.Line;
 /**
  * Implementazione di una linea che si ridimensiona durante il drag.
  */
-public class LineShape extends AbstractShape{
+public class LineShape extends AbstractShape {
 
     private double startX, startY;
     private final Line lineNode;
@@ -25,7 +25,7 @@ public class LineShape extends AbstractShape{
         this.lineNode = (Line) node;
         lineNode.setStroke(stroke);
     }
-    
+
     public LineShape(double startX, double startY, double endX, double endY, Color stroke) {
         super(new Line(startX, startY, endX, endY));
         this.startX = startX;
@@ -33,7 +33,7 @@ public class LineShape extends AbstractShape{
         this.lineNode = (Line) node;
         lineNode.setStroke(stroke);
     }
-    
+
     /**
      * Costruttore da nodo (per clonazione).
      */
@@ -43,7 +43,6 @@ public class LineShape extends AbstractShape{
         this.startX = line.getStartX();
         this.startY = line.getStartY();
     }
-
 
     /**
      * Ridefinisce la fine della linea durante il drag.
@@ -70,6 +69,7 @@ public class LineShape extends AbstractShape{
     public double getY() {
         return Math.min(lineNode.getStartY(), lineNode.getEndY());
     }
+
     @Override
     public void setX(double x) {
         double deltaX = x - getX();
@@ -85,6 +85,7 @@ public class LineShape extends AbstractShape{
         lineNode.setEndY(lineNode.getEndY() + deltaY);
         startY += deltaY;
     }
+
     @Override
     public double getWidth() {
         return Math.abs(lineNode.getEndX() - lineNode.getStartX());
@@ -94,14 +95,14 @@ public class LineShape extends AbstractShape{
     public double getHeight() {
         return Math.abs(lineNode.getEndY() - lineNode.getStartY());
     }
-    
+
     @Override
     public AbstractShape clone() {
         try {
             Line original = this.lineNode;
             Line newLine = new Line(
-                original.getStartX(), original.getStartY(),
-                original.getEndX(), original.getEndY()
+                    original.getStartX(), original.getStartY(),
+                    original.getEndX(), original.getEndY()
             );
 
             newLine.setStroke(original.getStroke());
@@ -119,12 +120,12 @@ public class LineShape extends AbstractShape{
             return null;
         }
     }
-    
+
     @Override
     public double getRotation() {
         return getNode().getRotate();
     }
-    
+
     @Override
     public void setRotation(double degrees) {
         getNode().setRotate(degrees);

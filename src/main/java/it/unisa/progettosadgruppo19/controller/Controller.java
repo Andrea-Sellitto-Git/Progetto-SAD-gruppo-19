@@ -52,7 +52,6 @@ public class Controller {
 
 //    @FXML
 //    private ScrollPane scrollPane;
-
     @FXML
     private Button mirrorHorizontalButton;
 
@@ -415,6 +414,11 @@ public class Controller {
      */
     private void onLoad() {
         Stage stage = (Stage) loadButton.getScene().getWindow();
+
+        // Forza pulizia prima del caricamento
+        drawingPane.getChildren().clear();
+        currentShapes.clear();
+
         new Load(stage, currentShapes, drawingPane, fileManager).execute();
     }
 
@@ -1070,23 +1074,22 @@ public class Controller {
 
         drawingPane.getChildren().remove(textField); // Rimuove il box di input
     }
-    
+
     @FXML
     private void sizeInc() {
         Shape selected = mouseHandler.getSelectedShapeInstance();
-        if(selected!=null){
+        if (selected != null) {
             commandInvoker.execute(new ScaleShape(shapeManager, selected, 10));
         }
-        
+
     }
 
-    
     @FXML
     private void sizeDec() {
         Shape selected = mouseHandler.getSelectedShapeInstance();
-        if(selected!=null){
+        if (selected != null) {
             commandInvoker.execute(new ScaleShape(shapeManager, selected, -10));
         }
     }
-    
+
 }

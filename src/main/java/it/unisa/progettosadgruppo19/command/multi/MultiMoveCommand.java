@@ -13,27 +13,27 @@ import java.util.Map;
  * Comando per spostare multiple shape simultaneamente.
  */
 public class MultiMoveCommand implements MouseMultiInputs, UndoableCommand {
-    
+
     private final List<Shape> shapes;
     private final double deltaX;
     private final double deltaY;
     private final Map<Shape, Double> originalX;
     private final Map<Shape, Double> originalY;
-    
+
     public MultiMoveCommand(List<Shape> shapes, double deltaX, double deltaY) {
         this.shapes = shapes;
         this.deltaX = deltaX;
         this.deltaY = deltaY;
         this.originalX = new HashMap<>();
         this.originalY = new HashMap<>();
-        
+
         // Salva le posizioni originali
         for (Shape shape : shapes) {
             originalX.put(shape, shape.getX());
             originalY.put(shape, shape.getY());
         }
     }
-    
+
     @Override
     public void execute() {
         System.out.println("[MULTI-MOVE] Spostamento di " + shapes.size() + " shape di (" + deltaX + ", " + deltaY + ")");
@@ -44,7 +44,7 @@ public class MultiMoveCommand implements MouseMultiInputs, UndoableCommand {
             shape.setY(newY);
         }
     }
-    
+
     @Override
     public void undo() {
         System.out.println("[MULTI-MOVE UNDO] Ripristino posizioni originali di " + shapes.size() + " shape");
@@ -53,21 +53,24 @@ public class MultiMoveCommand implements MouseMultiInputs, UndoableCommand {
             shape.setY(originalY.get(shape));
         }
     }
-    
+
     @Override
-    public void onPressed(MouseEvent e) {}
-    
+    public void onPressed(MouseEvent e) {
+    }
+
     @Override
-    public void onDragged(MouseEvent e) {}
-    
+    public void onDragged(MouseEvent e) {
+    }
+
     @Override
     public void onReleased(MouseEvent e) {
         execute();
     }
-    
+
     @Override
-    public void onMouseClick(MouseEvent e) {}
-    
+    public void onMouseClick(MouseEvent e) {
+    }
+
     @Override
     public boolean isExecutable() {
         return true;

@@ -41,12 +41,12 @@ public interface ShapeManagerReceiver {
      * @param index la posizione (zero-based) in cui inserirla
      */
     void insertShapeAt(Shape shape, int index);
-        
-    void rotateShape(Shape shape,double degrees);
+
+    void rotateShape(Shape shape, double degrees);
 
     boolean containsNode(Node node);
 
     void registerOnly(Shape shape);
-    
-    void scale(Shape shape,double delta);
+
+    void scale(Shape shape, double delta);
 }

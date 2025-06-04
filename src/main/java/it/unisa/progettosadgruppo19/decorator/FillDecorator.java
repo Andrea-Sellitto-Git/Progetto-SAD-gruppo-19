@@ -13,7 +13,7 @@ import java.io.Serializable;
 public class FillDecorator extends ShapeDecorator implements Serializable {
 
     private Color fill;
-    
+
     public void setFill(Color newFill) {
         this.fill = newFill;
         applyFillSafely();
@@ -61,7 +61,7 @@ public class FillDecorator extends ShapeDecorator implements Serializable {
     public Color getFillColor() {
         return fill;
     }
-    
+
     public Color getFill() {
         return fill;
     }

@@ -9,17 +9,19 @@ import it.unisa.progettosadgruppo19.model.shapes.Shape;
 public interface ClipboardReceiver {
 
     /**
-     * Imposta la {@link Shape} corrente nel clipboard.
-     * Se l'argomento è {@code null}, il clipboard viene svuotato.
+     * Imposta la {@link Shape} corrente nel clipboard. Se l'argomento è
+     * {@code null}, il clipboard viene svuotato.
      *
-     * @param shape la shape da memorizzare nel clipboard; {@code null} per svuotarlo
+     * @param shape la shape da memorizzare nel clipboard; {@code null} per
+     * svuotarlo
      */
     void setClipboard(Shape shape);
 
     /**
      * Restituisce la {@link Shape} attualmente memorizzata nel clipboard.
      *
-     * @return la shape salvata nel clipboard, o {@code null} se il clipboard è vuoto
+     * @return la shape salvata nel clipboard, o {@code null} se il clipboard è
+     * vuoto
      */
     Shape getClipboard();
 }

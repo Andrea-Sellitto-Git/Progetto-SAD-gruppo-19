@@ -10,7 +10,7 @@ import javafx.scene.paint.Color;
 public class ShapeData implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     private String type;
     private double x, y, width, height;
     private double strokeR, strokeG, strokeB, strokeA;
@@ -18,7 +18,7 @@ public class ShapeData implements Serializable {
     private double rotation;
     private String text; // Per TextShape e coordinate poligono
     private double fontSize;
-    
+
     /**
      * Costruttore base per shape senza testo.
      */
@@ -28,7 +28,7 @@ public class ShapeData implements Serializable {
 
     /**
      * Costruisce un DTO a partire dai parametri forniti.
-     * 
+     *
      * @param type tipo della shape
      * @param x coordinata X
      * @param y coordinata Y
@@ -74,7 +74,7 @@ public class ShapeData implements Serializable {
             this.fillB = 0.0;
             this.fillA = 0.0;
         }
-        
+
         this.text = text;
         this.fontSize = fontSize;
     }
@@ -200,7 +200,7 @@ public class ShapeData implements Serializable {
             this.fillA = fill.getOpacity();
         }
     }
-    
+
     /**
      * Restituisce il testo (per TextShape) o le coordinate (per poligoni).
      */
@@ -244,17 +244,17 @@ public class ShapeData implements Serializable {
     }
 
     /**
-     * Restituisce le coordinate del poligono come array di double.
-     * Valido solo se isPolygon() restituisce true.
+     * Restituisce le coordinate del poligono come array di double. Valido solo
+     * se isPolygon() restituisce true.
      */
     public double[] getPolygonCoordinates() {
         if (!isPolygon() || text == null || text.trim().isEmpty()) {
             return new double[0];
         }
-        
+
         String[] coords = text.split(",");
         double[] result = new double[coords.length];
-        
+
         try {
             for (int i = 0; i < coords.length; i++) {
                 result[i] = Double.parseDouble(coords[i].trim());
@@ -263,7 +263,7 @@ public class ShapeData implements Serializable {
             System.err.println("Errore nel parsing delle coordinate del poligono: " + e.getMessage());
             return new double[0];
         }
-        
+
         return result;
     }
 
@@ -275,10 +275,12 @@ public class ShapeData implements Serializable {
             this.text = "";
             return;
         }
-        
+
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < coordinates.length; i++) {
-            if (i > 0) sb.append(",");
+            if (i > 0) {
+                sb.append(",");
+            }
             sb.append(coordinates[i]);
         }
         this.text = sb.toString();
@@ -296,36 +298,40 @@ public class ShapeData implements Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append(type).append(" at (").append(x).append(", ").append(y).append(")");
         sb.append(" size ").append(width).append("x").append(height);
-        
+
         if (rotation != 0) {
             sb.append(" rotated ").append(rotation).append("°");
         }
-        
+
         if (isText() && text != null) {
             sb.append(" text: '").append(text).append("' font: ").append(fontSize);
         } else if (isPolygon() && text != null) {
             int vertexCount = text.split(",").length / 2;
             sb.append(" vertices: ").append(vertexCount);
         }
-        
+
         return sb.toString();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
         ShapeData that = (ShapeData) obj;
-        
-        return Double.compare(that.x, x) == 0 &&
-               Double.compare(that.y, y) == 0 &&
-               Double.compare(that.width, width) == 0 &&
-               Double.compare(that.height, height) == 0 &&
-               Double.compare(that.rotation, rotation) == 0 &&
-               Double.compare(that.fontSize, fontSize) == 0 &&
-               type.equals(that.type) &&
-               java.util.Objects.equals(text, that.text);
+
+        return Double.compare(that.x, x) == 0
+                && Double.compare(that.y, y) == 0
+                && Double.compare(that.width, width) == 0
+                && Double.compare(that.height, height) == 0
+                && Double.compare(that.rotation, rotation) == 0
+                && Double.compare(that.fontSize, fontSize) == 0
+                && type.equals(that.type)
+                && java.util.Objects.equals(text, that.text);
     }
 
     @Override

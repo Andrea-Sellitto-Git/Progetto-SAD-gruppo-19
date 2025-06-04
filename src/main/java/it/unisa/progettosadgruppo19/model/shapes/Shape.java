@@ -36,16 +36,23 @@ public interface Shape {
      * @return true se il punto è contenuto nella shape
      */
     boolean contains(double x, double y);
-    
+
     double getX();
+
     double getY();
-    void   setX(double x);
-    void   setY(double x);
+
+    void setX(double x);
+
+    void setY(double x);
+
     double getWidth();
+
     double getHeight();
+
     double getRotation();
-    void   setRotation(double degrees);
+
+    void setRotation(double degrees);
+
     Shape clone();
-    
-    
+
 }

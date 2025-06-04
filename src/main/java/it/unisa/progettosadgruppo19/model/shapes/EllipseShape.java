@@ -10,7 +10,7 @@ public class EllipseShape extends AbstractShape implements Shape {
 
     private double startX, startY;
     private final Ellipse ellipseNode;
-    
+
     private EllipseShape(double startX, double startY, Ellipse ellipse, Color stroke) {
         super(ellipse);
         this.startX = startX;
@@ -18,7 +18,6 @@ public class EllipseShape extends AbstractShape implements Shape {
         this.ellipseNode = (Ellipse) node;
         ellipseNode.setStroke(stroke);
     }
-
 
     /**
      * Costruisce un'EllipseShape iniziale di raggio zero.
@@ -51,7 +50,7 @@ public class EllipseShape extends AbstractShape implements Shape {
         this.ellipseNode = (Ellipse) node;
         ellipseNode.setStroke(stroke);
     }
-    
+
     /**
      * Costruttore per il clone.
      *
@@ -96,7 +95,7 @@ public class EllipseShape extends AbstractShape implements Shape {
     public void setY(double y) {
         ellipseNode.setCenterY(y + ellipseNode.getRadiusY());
         this.startY = ellipseNode.getCenterY();
-    }    
+    }
 
     @Override
     public double getWidth() {
@@ -134,7 +133,7 @@ public class EllipseShape extends AbstractShape implements Shape {
     public double getRotation() {
         return getNode().getRotate();
     }
-    
+
     @Override
     public void setRotation(double degrees) {
         getNode().setRotate(degrees);

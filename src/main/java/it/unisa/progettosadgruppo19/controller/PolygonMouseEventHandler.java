@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Gestore degli eventi mouse per disegnare un poligono a forma libera.
- * VERSIONE CORRETTA che assicura UserData corretto per la selezione.
+ * Gestore degli eventi mouse per disegnare un poligono a forma libera. VERSIONE
+ * CORRETTA che assicura UserData corretto per la selezione.
  */
 public class PolygonMouseEventHandler {
 
@@ -35,11 +35,11 @@ public class PolygonMouseEventHandler {
     private boolean isActive = true;
 
     public PolygonMouseEventHandler(Pane drawingPane,
-                                    List<FreeFormPolygonShape> polygonList,
-                                    ShapeManagerReceiver shapeManager,
-                                    Color strokeColor,
-                                    Color fillColor,
-                                    Runnable onComplete) {
+            List<FreeFormPolygonShape> polygonList,
+            ShapeManagerReceiver shapeManager,
+            Color strokeColor,
+            Color fillColor,
+            Runnable onComplete) {
         this.drawingPane = drawingPane;
         this.polygonList = polygonList;
         this.shapeManager = shapeManager;
@@ -77,7 +77,8 @@ public class PolygonMouseEventHandler {
     }
 
     /**
-     * CORREZIONE CRITICA: Assicura che UserData sia sempre impostato correttamente
+     * CORREZIONE CRITICA: Assicura che UserData sia sempre impostato
+     * correttamente
      */
     private void setUserDataSafely() {
         if (decoratedPolygon != null && decoratedPolygon.getNode() != null) {
@@ -87,7 +88,7 @@ public class PolygonMouseEventHandler {
                 if (currentUserData == null || currentUserData != decoratedPolygon) {
                     decoratedPolygon.getNode().setUserData(decoratedPolygon);
                     System.out.println("[POLYGON] UserData impostato/corretto");
-                    
+
                     // Verifica doppia
                     Object verifyUserData = decoratedPolygon.getNode().getUserData();
                     if (verifyUserData != decoratedPolygon) {
@@ -122,10 +123,10 @@ public class PolygonMouseEventHandler {
 
             // CORREZIONE CRITICA: Assicura UserData IMMEDIATAMENTE
             setUserDataSafely();
-            
+
             // Aggiungo il nodo decorato al Pane
             drawingPane.getChildren().add(decoratedPolygon.getNode());
-            
+
             // Riverifica UserData dopo l'aggiunta al pane
             setUserDataSafely();
 
@@ -139,9 +140,9 @@ public class PolygonMouseEventHandler {
             drawingPane.getChildren().add(startIndicator);
 
             addVertexIndicator(x, y);
-            
-            System.out.println("[POLYGON] Primo vertice aggiunto. UserData verificato: " + 
-                             (decoratedPolygon.getNode().getUserData() != null));
+
+            System.out.println("[POLYGON] Primo vertice aggiunto. UserData verificato: "
+                    + (decoratedPolygon.getNode().getUserData() != null));
             return;
         }
 
@@ -164,29 +165,29 @@ public class PolygonMouseEventHandler {
                 cmd.execute();
 
                 System.out.println("[POLYGON] Poligono chiuso con " + basePolygon.getVertexCount() + " vertici.");
-                System.out.println("[POLYGON] UserData finale verificato: " + 
-                                 (decoratedPolygon.getNode().getUserData() != null));
-                
+                System.out.println("[POLYGON] UserData finale verificato: "
+                        + (decoratedPolygon.getNode().getUserData() != null));
+
                 if (basePolygon.getVertexCount() >= 3) {
                     System.out.println("[POLYGON] Area: " + String.format("%.2f", basePolygon.calculateArea()));
                     System.out.println("[POLYGON] Perimetro: " + String.format("%.2f", basePolygon.calculatePerimeter()));
                     System.out.println("[POLYGON] Convesso: " + basePolygon.isConvex());
                 }
-                
+
                 // e) Reset delle variabili prima di disattivare
                 basePolygon = null;
                 decoratedPolygon = null;
-                
+
                 // f) Disattiva l'handler
                 isActive = false;
-                
+
                 // g) Detach e callback
                 detach();
-                
+
                 if (onComplete != null) {
                     onComplete.run();
                 }
-                
+
                 System.out.println("[POLYGON] Strumento poligono disattivato automaticamente.");
             } else {
                 System.out.println("[POLYGON] Serve almeno 1 vertice aggiuntivo per chiudere il poligono. Attuali: " + basePolygon.getVertexCount());
@@ -199,10 +200,10 @@ public class PolygonMouseEventHandler {
             basePolygon.addPoint(x, y);
             addVertexIndicator(x, y);
             updateStartIndicator();
-            
+
             // CORREZIONE: Ricontrolla UserData dopo ogni modifica
             setUserDataSafely();
-            
+
             System.out.println("[POLYGON] Vertice " + basePolygon.getVertexCount() + " aggiunto.");
             if (basePolygon.canClose()) {
                 System.out.println("[POLYGON] Il poligono può ora essere chiuso cliccando sul primo vertice.");
@@ -227,7 +228,7 @@ public class PolygonMouseEventHandler {
             basePolygon = null;
             System.out.println("[POLYGON] Poligono incompleto rimosso.");
         }
-        
+
         isActive = false;
     }
 
@@ -242,11 +243,11 @@ public class PolygonMouseEventHandler {
     public boolean canCloseCurrentPolygon() {
         return basePolygon != null && basePolygon.canClose() && isActive;
     }
-    
+
     public boolean isActive() {
         return isActive;
     }
-    
+
     public void reactivate() {
         isActive = true;
         System.out.println("[POLYGON] Handler riattivato.");

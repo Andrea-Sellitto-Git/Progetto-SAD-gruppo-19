@@ -7,7 +7,7 @@ import javafx.scene.Node;
 /**
  * Decorator astratto che inoltra tutte le chiamate all'istanza decorata.
  */
-public abstract class ShapeDecorator implements Shape{
+public abstract class ShapeDecorator implements Shape {
 
     protected final Shape decorated;
 
@@ -69,7 +69,7 @@ public abstract class ShapeDecorator implements Shape{
     public double getHeight() {
         return decorated.getHeight();
     }
-    
+
     public Shape getWrapped() {
         return decorated;
     }
@@ -81,17 +81,17 @@ public abstract class ShapeDecorator implements Shape{
     public double getRotation() {
         return decorated.getRotation();
     }
-    
+
     @Override
     public void setRotation(double degrees) {
         decorated.setRotation(degrees);
-    }    
-        
+    }
+
     private AbstractShape unwrapToAbstract(Shape shape) {
         while (shape instanceof ShapeDecorator) {
             shape = ((ShapeDecorator) shape).decorated;
         }
         return (AbstractShape) shape;
     }
-   
+
 }
