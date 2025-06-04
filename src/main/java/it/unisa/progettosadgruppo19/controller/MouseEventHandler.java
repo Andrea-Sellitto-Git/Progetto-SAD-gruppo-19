@@ -362,6 +362,7 @@ public class MouseEventHandler implements ClipboardReceiver {
         System.out.println("[PRESSED] Click su (" + x + ", " + y + ")");
         
         if (selectedShapeInstance != null) {
+            selectedShapeInstance = AbstractShape.unwrapToAbstract(selectedShapeInstance);
             Node node = selectedShapeInstance.getNode();
             System.out.println("[PRESSED] Shape selezionata: " + selectedShapeInstance.getClass().getSimpleName());
 
@@ -785,7 +786,8 @@ public class MouseEventHandler implements ClipboardReceiver {
                 double newW = rect.getWidth();
                 double newH = rect.getHeight();
 
-                applyUndoableStrategy(new Resize(selectedShapeInstance,
+                Shape baseShape = AbstractShape.unwrapToAbstract(selectedShapeInstance);
+                applyUndoableStrategy(new Resize(baseShape,
                         oldX, oldY, oldW, oldH, newX, newY, newW, newH));
 
             } else if (fx instanceof Ellipse ell) {
@@ -799,7 +801,8 @@ public class MouseEventHandler implements ClipboardReceiver {
                 double newRX = ell.getRadiusX();
                 double newRY = ell.getRadiusY();
 
-                applyUndoableStrategy(new Resize(selectedShapeInstance,
+                Shape baseShape = AbstractShape.unwrapToAbstract(selectedShapeInstance);
+                applyUndoableStrategy(new Resize(baseShape,
                         oldCX, oldCY, oldRX, oldRY, newCX, newCY, newRX, newRY));
 
             } else if (fx instanceof Line line) {
@@ -813,7 +816,8 @@ public class MouseEventHandler implements ClipboardReceiver {
                 double newEndX = line.getEndX();
                 double newEndY = line.getEndY();
 
-                applyUndoableStrategy(new Resize(selectedShapeInstance,
+                Shape baseShape = AbstractShape.unwrapToAbstract(selectedShapeInstance);
+                applyUndoableStrategy(new Resize(baseShape,
                         oldStartX, oldStartY, oldEndX, oldEndY,
                         newStartX, newStartY, newEndX, newEndY));
             } else if (fx instanceof Polygon && selectedShapeInstance instanceof FreeFormPolygonShape polygonShape) {
@@ -856,13 +860,15 @@ public class MouseEventHandler implements ClipboardReceiver {
                 double newX = rect.getX();
                 double newY = rect.getY();
                 if (origX != newX || origY != newY) {
-                    applyUndoableStrategy(new Move(selectedShapeInstance, origX, origY, newX, newY));
+                    Shape baseShape = AbstractShape.unwrapToAbstract(selectedShapeInstance);
+                    applyUndoableStrategy(new Move(baseShape, origX, origY, newX, newY));
                 }
             } else if (node instanceof Ellipse ell) {
                 double newCX = ell.getCenterX();
                 double newCY = ell.getCenterY();
                 if (origCenterX != newCX || origCenterY != newCY) {
-                    applyUndoableStrategy(new Move(selectedShapeInstance, origCenterX, origCenterY, newCX, newCY));
+                    Shape baseShape = AbstractShape.unwrapToAbstract(selectedShapeInstance);
+                    applyUndoableStrategy(new Move(baseShape, origCenterX, origCenterY, newCX, newCY));
                 }
             } else if (node instanceof Line line) {
                 double newStartX = line.getStartX();
@@ -870,7 +876,8 @@ public class MouseEventHandler implements ClipboardReceiver {
                 double newEndX = line.getEndX();
                 double newEndY = line.getEndY();
                 if (origX1 != newStartX || origY1 != newStartY || origX2 != newEndX || origY2 != newEndY) {
-                    applyUndoableStrategy(new Move(selectedShapeInstance,
+                    Shape baseShape = AbstractShape.unwrapToAbstract(selectedShapeInstance);
+                    applyUndoableStrategy(new Move(baseShape,
                             origX1, origY1, origX2, origY2,
                             newStartX, newStartY, newEndX, newEndY));
                 }
@@ -878,7 +885,8 @@ public class MouseEventHandler implements ClipboardReceiver {
                 double newX = textNode.getX();
                 double newY = textNode.getY();
                 if (origX != newX || origY != newY) {
-                    applyUndoableStrategy(new Move(selectedShapeInstance, origX, origY, newX, newY));
+                    Shape baseShape = AbstractShape.unwrapToAbstract(selectedShapeInstance);
+                    applyUndoableStrategy(new Move(baseShape, origX, origY, newX, newY));
                 }
             } else if (node instanceof Polygon && selectedShapeInstance instanceof FreeFormPolygonShape polygonShape) {
                 // CORREZIONE: Gestione corretta del movimento del poligono

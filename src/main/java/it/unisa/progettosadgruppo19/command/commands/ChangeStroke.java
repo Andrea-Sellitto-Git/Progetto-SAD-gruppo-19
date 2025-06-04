@@ -10,7 +10,7 @@ import javafx.scene.input.MouseEvent;
 public class ChangeStroke implements MouseMultiInputs, UndoableCommand {
 
     private final Shape shape;
-    private Color oldStroke;
+    private final Color oldStroke;
     private Color newStroke;
 
     public ChangeStroke(Shape shape, Color oldStroke, Color newStroke) {

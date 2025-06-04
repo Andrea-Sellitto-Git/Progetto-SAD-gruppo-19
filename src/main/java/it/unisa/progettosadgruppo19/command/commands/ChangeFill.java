@@ -10,7 +10,7 @@ public class ChangeFill implements MouseMultiInputs, UndoableCommand {
 
     private final Shape shape;
     private final Color oldFill;
-    private final Color newFill;
+    private Color newFill;
 
     public ChangeFill(Shape shape, Color oldFill, Color newFill) {
         this.shape = shape;

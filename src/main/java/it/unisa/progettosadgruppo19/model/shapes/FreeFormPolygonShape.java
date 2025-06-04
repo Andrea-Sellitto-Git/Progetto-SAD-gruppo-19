@@ -265,15 +265,8 @@ public class FreeFormPolygonShape extends AbstractShape {
         return GeometryUtils.isNearPolygonBorder(x, y, points, tolerance);
     }
 
-    /**
-     * Quando si chiude il poligono, volendo si può applicare un fill di default (opzionale).
-     * Qui non faccio nulla di particolare, limito a lasciare il fill trasparente o gestito da decorator.
-     */
     public void closePolygon() {
-        System.out.println("[POLYGON] Poligono chiuso con " + getVertexCount() + " vertici");
-        // Non serve fare niente di esplicito, perché Polygon chiude già la forma.
-        // Se si vuole un colore di fill di default, si può:
-        // polygon.setFill(Color.LIGHTGRAY);
+        System.out.println("[POLYGON] Poligono chiuso con " + getVertexCount() + " vertici");  
     }
 
     @Override
@@ -403,7 +396,7 @@ public class FreeFormPolygonShape extends AbstractShape {
     }
 
     /**
-     * CORREZIONE: Clone migliorato con gestione completa delle proprietà.
+     * Clone migliorato con gestione completa delle proprietà.
      */
     @Override
     public FreeFormPolygonShape clone() {
@@ -480,7 +473,7 @@ public class FreeFormPolygonShape extends AbstractShape {
     }
 
     /**
-     * CORREZIONE: Metodi di utilità aggiuntivi per debug e gestione.
+     * Metodi di utilità aggiuntivi per debug e gestione.
      */
     
     /**
