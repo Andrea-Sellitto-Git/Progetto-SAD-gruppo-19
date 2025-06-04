@@ -1,5 +1,26 @@
 package it.unisa.progettosadgruppo19.controller;
 
+import it.unisa.progettosadgruppo19.command.commands.Delete;
+import it.unisa.progettosadgruppo19.command.commands.Copy;
+import it.unisa.progettosadgruppo19.command.commands.Paste;
+import it.unisa.progettosadgruppo19.command.commands.ChangeFill;
+import it.unisa.progettosadgruppo19.command.commands.ScaleShape;
+import it.unisa.progettosadgruppo19.command.commands.ZLevelsToFront;
+import it.unisa.progettosadgruppo19.command.commands.ChangeStroke;
+import it.unisa.progettosadgruppo19.command.commands.Cut;
+import it.unisa.progettosadgruppo19.command.commands.Mirror;
+import it.unisa.progettosadgruppo19.command.commands.ZLevelsToBack;
+import it.unisa.progettosadgruppo19.command.commands.Rotate;
+import it.unisa.progettosadgruppo19.command.file.Load;
+import it.unisa.progettosadgruppo19.command.file.Save;
+import it.unisa.progettosadgruppo19.command.StackUndoInvoker;
+import it.unisa.progettosadgruppo19.command.Add;
+import it.unisa.progettosadgruppo19.command.multi.MultiMoveCommand;
+import it.unisa.progettosadgruppo19.command.multi.MultiCopyCommand;
+import it.unisa.progettosadgruppo19.command.multi.MultiChangeFillCommand;
+import it.unisa.progettosadgruppo19.command.multi.MultiRotateCommand;
+import it.unisa.progettosadgruppo19.command.multi.MultiDeleteCommand;
+import it.unisa.progettosadgruppo19.command.multi.MultiChangeStrokeCommand;
 import it.unisa.progettosadgruppo19.model.shapes.AbstractShape;
 import it.unisa.progettosadgruppo19.model.shapes.*;
 import it.unisa.progettosadgruppo19.command.*;

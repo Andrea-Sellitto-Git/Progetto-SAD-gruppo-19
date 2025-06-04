@@ -1,8 +1,8 @@
 package it.unisa.progettosadgruppo19.controller;
 
 import it.unisa.progettosadgruppo19.model.shapes.AbstractShape;
-import it.unisa.progettosadgruppo19.command.receiver.ShapeManagerReceiver;
-import it.unisa.progettosadgruppo19.command.receiver.ZOrderReceiver;
+import it.unisa.progettosadgruppo19.command.receivers.ShapeManagerReceiver;
+import it.unisa.progettosadgruppo19.command.receivers.ZOrderReceiver;
 import it.unisa.progettosadgruppo19.model.shapes.Shape;
 
 import javafx.scene.Node;

@@ -1,7 +1,7 @@
 package it.unisa.progettosadgruppo19.controller;
 
-import it.unisa.progettosadgruppo19.command.CreateFreeFormPolygon;
-import it.unisa.progettosadgruppo19.command.receiver.ShapeManagerReceiver;
+import it.unisa.progettosadgruppo19.command.polygon.CreateFreeFormPolygon;
+import it.unisa.progettosadgruppo19.command.receivers.ShapeManagerReceiver;
 import it.unisa.progettosadgruppo19.model.shapes.FreeFormPolygonShape;
 import it.unisa.progettosadgruppo19.model.shapes.Shape;
 import it.unisa.progettosadgruppo19.decorator.FillDecorator;

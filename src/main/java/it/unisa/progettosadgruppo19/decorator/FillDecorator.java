@@ -12,7 +12,12 @@ import java.io.Serializable;
  */
 public class FillDecorator extends ShapeDecorator implements Serializable {
 
-    private final Color fill;
+    private Color fill;
+    
+    public void setFill(Color newFill) {
+        this.fill = newFill;
+        applyFillSafely();
+    }
 
     /**
      * Applica il colore di fill alla shape decorata in modo sicuro.
@@ -54,6 +59,10 @@ public class FillDecorator extends ShapeDecorator implements Serializable {
      * Restituisce il colore di fill applicato.
      */
     public Color getFillColor() {
+        return fill;
+    }
+    
+    public Color getFill() {
         return fill;
     }
 

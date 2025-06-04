@@ -1,5 +1,12 @@
 package it.unisa.progettosadgruppo19.controller;
 
+import it.unisa.progettosadgruppo19.command.commands.Move;
+import it.unisa.progettosadgruppo19.command.commands.Create;
+import it.unisa.progettosadgruppo19.command.commands.Resize;
+import it.unisa.progettosadgruppo19.command.UndoableCommand;
+import it.unisa.progettosadgruppo19.command.MouseMultiInputs;
+import it.unisa.progettosadgruppo19.command.StackUndoInvoker;
+import it.unisa.progettosadgruppo19.command.multi.MultiMoveCommand;
 import it.unisa.progettosadgruppo19.decorator.FillDecorator;
 import it.unisa.progettosadgruppo19.decorator.StrokeDecorator;
 import it.unisa.progettosadgruppo19.factory.ConcreteShapeCreator;
@@ -8,7 +15,7 @@ import it.unisa.progettosadgruppo19.model.shapes.AbstractShape;
 import it.unisa.progettosadgruppo19.model.shapes.Shape;
 import it.unisa.progettosadgruppo19.model.shapes.FreeFormPolygonShape;
 import it.unisa.progettosadgruppo19.command.*;
-import it.unisa.progettosadgruppo19.command.receiver.ClipboardReceiver;
+import it.unisa.progettosadgruppo19.command.receivers.ClipboardReceiver;
 import it.unisa.progettosadgruppo19.model.shapes.TextShape;
 import it.unisa.progettosadgruppo19.strategy.*;
 import it.unisa.progettosadgruppo19.util.GeometryUtils;
